@@ -13,11 +13,13 @@
     <h1>Testing Topics on Wikis</h1>
     {% if queried_doc %}
     <h2>Wikis similar to {{queried_doc['sitename_txt']|join('')}}</h2>
-    <dl class="dl-horizontal">
+    <small>
+    <ul class="list-inline">
     {% for grouping in queried_doc|topics_sorted %}
-        <dt>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}</dt><dd>{{grouping[1]}}</dd>
+        <li><b>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}</b>{{grouping[1]}}</li>
     {% endfor %}
-    </dl>
+    </ul>
+    </small>
     {% endif %}
     <div class="row">
         <ul>
@@ -28,7 +30,12 @@
 	      <small>
 		<ul class="list-inline">
 		  {% for grouping in doc|topics_sorted %}
-		      <li><b>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}:</b> {{grouping[1]}}</li>
+		      <li>
+			{% if grouping[0] in queried_doc|topics_sorted_keys %}<u>{% endif %}
+			<b>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}:</b> 
+			{{grouping[1]}}
+			{% if grouping[0] in queried_doc|topics_sorted_keys %}</u>{% endif %}
+		      </li>
 		  {% endfor %}
 		</ul>
 	      </small>
