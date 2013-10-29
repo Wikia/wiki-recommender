@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Search App</title>
+    <!-- Bootstrap -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="/static/css/bootstrap-glyphicons.css" rel="stylesheet" media="screen">
+    <link href="/static/css/main.css" rel="stylesheet" media="screen">
+  </head>
+  <body class="container">
+    <script src="http://code.jquery.com/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <h1>Testing Topics on Wikis</h1>
+    {% if queried_doc %}
+    <h2>Wikis similar to {{queried_doc['sitename_txt']|join('')}}</h2>
+    <dl class="dl-horizontal">
+    {% for grouping in queried_doc|topics_sorted %}
+        <dt>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}</dt><dd>{{grouping[1]}}</dd>
+    {% endfor %}
+    </dl>
+    {% endif %}
+    <div class="row">
+        <ul>
+            {% for doc in docs %}
+            <li>
+	      <a href="?{{qs}}&id={{ doc['id'] }}">More Like.</a> {{ doc['sitename_txt']|join('') }} 
+	      {% if queried_doc %}(shares <b>{{doc|topics_sorted|intersection_count(queried_doc|topics_sorted)}}</b> topics){% endif %}
+	      <small>
+		<ul class="list-inline">
+		  {% for grouping in doc|topics_sorted %}
+		      <li><b>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}:</b> {{grouping[1]}}</li>
+		  {% endfor %}
+		</ul>
+	      </small>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+  </body>
+</html>
