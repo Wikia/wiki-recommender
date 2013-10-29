@@ -16,7 +16,7 @@
     <small>
     <ul class="list-inline">
     {% for grouping in queried_doc|topics_sorted %}
-        <li><b>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}</b>{{grouping[1]}}</li>
+        <li><b>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}</b> {{grouping[1]}}</li>
     {% endfor %}
     </ul>
     </small>
@@ -25,16 +25,16 @@
         <ul>
             {% for doc in docs %}
             <li>
-	      <a href="?{{qs}}&id={{ doc['id'] }}">More Like.</a> {{ doc['sitename_txt']|join('') }} 
+	      <a href="{{doc['url']}}">{{ doc['sitename_txt']|join('') }}</a> (WAM: {{doc['wam_i']}}, {{doc['score']}}) <a href="?{{qs}}&id={{ doc['id'] }}">More like this..</a>
 	      {% if queried_doc %}(shares <b>{{doc|topics_sorted|intersection_count(queried_doc|topics_sorted)}}</b> topics){% endif %}
 	      <small>
 		<ul class="list-inline">
 		  {% for grouping in doc|topics_sorted %}
 		      <li>
-			{% if grouping[0] in queried_doc|topics_sorted_keys %}<u>{% endif %}
+			{% if queried_doc and grouping[0] in queried_doc|topics_sorted_keys %}<u>{% endif %}
 			<b>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}:</b> 
 			{{grouping[1]}}
-			{% if grouping[0] in queried_doc|topics_sorted_keys %}</u>{% endif %}
+			{% if queried_doc and grouping[0] in queried_doc|topics_sorted_keys %}</u>{% endif %}
 		      </li>
 		  {% endfor %}
 		</ul>
