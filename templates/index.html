@@ -10,7 +10,7 @@
   <body class="container">
     <script src="http://code.jquery.com/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
-    <h1>Testing Topics on Wikis</h1>
+    <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Testing Topics on Wikis</h1>
     {% if queried_doc %}
     <h2>Wikis similar to {{queried_doc['sitename_txt']|join('')}}</h2>
     <small>
@@ -21,27 +21,42 @@
     </ul>
     </small>
     {% endif %}
-    <div class="row">
-        <ul>
-            {% for doc in docs %}
-            <li>
-	      <a href="{{doc['url']}}">{{ doc['sitename_txt']|join('') }}</a> (WAM: {{doc['wam_i']}}, {{doc['score']}}) <a href="?{{qs}}&id={{ doc['id'] }}">More like this..</a>
-	      {% if queried_doc %}(shares <b>{{doc|topics_sorted|intersection_count(queried_doc|topics_sorted)}}</b> topics){% endif %}
+    {% for doc in docs %}
+    <div class="well">
+      <div class="row">
+	<div class="col-md-3 wiki-image">
+	   <a href="{{doc['url']}}"><img class="img-thumbnail" src="{{ details[doc['id']]['image'] }}" alt=""/></a>
+	</div>
+	<div class="col-md-9 content-wrapper">
+	  <div class="row">
+	    <div class="row">
+	      <h3 style="text-align: left;"><a href="{{doc['url']}}">{{ doc['sitename_txt']|join('') }}</a> <a href="?{{qs}}&id={{ doc['id'] }}" title="More like this..."><span class="glyphicon glyphicon-eye-open"></span></a></h3>
+	    </div>
+	    <div class="row">
+	      <p><small>(WAM: {{doc['wam_i']}}, Distance: {{doc['score']}})
+		{% if queried_doc %}(shares <b>{{doc|topics_sorted|intersection_count(queried_doc|topics_sorted)}}</b> topics){% endif %}
+		  </small>
+              </p>
+	    </div>
+	    <div class="row">
 	      <small>
 		<ul class="list-inline">
 		  {% for grouping in doc|topics_sorted %}
-		      <li>
-			{% if queried_doc and grouping[0] in queried_doc|topics_sorted_keys %}<u>{% endif %}
-			<b>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}:</b> 
-			{{grouping[1]}}
-			{% if queried_doc and grouping[0] in queried_doc|topics_sorted_keys %}</u>{% endif %}
-		      </li>
+		  <li>
+		    {% if queried_doc and grouping[0] in queried_doc|topics_sorted_keys %}<u>{% endif %}
+		      <b>{{grouping[0]|replace('topic_', '')|replace('_tf', '')}}:</b> 
+		      {{grouping[1]}}
+		      {% if queried_doc and grouping[0] in queried_doc|topics_sorted_keys %}</u>{% endif %}
+		  </li>
 		  {% endfor %}
 		</ul>
 	      </small>
-            </li>
-            {% endfor %}
-        </ul>
+	    </div>
+	  </div>
+	</div>
+      </div>
+    </div>
+    {% endfor %}
     </div>
   </body>
 </html>

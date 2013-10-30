@@ -95,7 +95,7 @@ def as_euclidean(query):
 
     keys = get_topics_sorted_keys(doc)
 
-    sort = 'dist(2, vector(%s), vector(%s))' % (", ".join(keys), ", ".join(['%.4f' % doc[key] for key in keys]))
+    sort = 'dist(2, vector(%s), vector(%s))' % (", ".join(keys), ", ".join(['%.8f' % doc[key] for key in keys]))
 
     params = {'wt':'json', 
               #'q':'-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in keys])),
@@ -127,8 +127,13 @@ def index():
     else:
         docs = get_random_grouping()
 
-    #docs = [doc for doc in docs if len(get_topics_sorted_keys(doc)) > 0]  # dropping topicless wikis
-    return render_template('index.html', docs=docs, queried_doc=queried_doc, qs=re.sub(r'id=\d+(&)?', '', request.query_string).replace('&&', '&'))
+    NO_IMAGE_URL = "http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png"
+    details = requests.get("http://www.wikia.com/api/v1/Wikis/Details/", params={'ids':",".join([doc['id'] for doc in docs])}).json().get('items', {})
+    for doc in docs:
+        if not details.get(doc['id'], {}).get('image', ''):
+            details[doc['id']] = dict(details.get(doc['id'], {}).items() + [('image', NO_IMAGE_URL)])
+
+    return render_template('index.html', docs=docs, queried_doc=queried_doc, qs=re.sub(r'id=\d+(&)?', '', request.query_string).replace('&&', '&'), details=details)
 
 app.debug = True
 app.run()
