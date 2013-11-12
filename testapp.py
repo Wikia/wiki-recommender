@@ -102,6 +102,7 @@ def as_euclidean(query):
               'q':'*:*',
               'sort': sort + ' asc',
               'rows':20, 
+              'fq': '-id:%s' % doc['id'],
               'fl':'id,sitename_txt,topic_*,wam_i,url,'+sort}
 
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
