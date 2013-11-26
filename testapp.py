@@ -10,7 +10,7 @@ app = Flask(__name__)
 Might be a good candidate for a config file.
 Another interesting idea w.r.t. automation: argparse + chef recipes
 """
-SOLR_URL = sys.argv[1]
+SOLR_URL = 'http://dev-search.prod.wikia.net:8983/solr/xwiki'
 
 
 @app.template_filter('topics_sorted')
@@ -78,10 +78,10 @@ def mlt(query):
     if doc is None:
         return None, []  # same diff
 
-    params = {'wt':'json', 
+    params = {'wt':'json',
               'q':'-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in get_topics_sorted_keys(doc)])),
               'bf': ['%s^10' for key in get_topics_sorted_keys(doc)] + ['wam_i'],
-              'rows':20, 
+              'rows':20,
               'fl':'id,sitename_txt,topic_*,wam_i,url'}
 
     return (doc, requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', []))
@@ -97,11 +97,11 @@ def as_euclidean(query):
 
     sort = 'dist(2, vector(%s), vector(%s))' % (", ".join(keys), ", ".join(['%.8f' % doc[key] for key in keys]))
 
-    params = {'wt':'json', 
+    params = {'wt':'json',
               #'q':'-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in keys])),
               'q':'*:*',
               'sort': sort + ' asc',
-              'rows':20, 
+              'rows':20,
               'fq': '-id:%s' % doc['id'],
               'fl':'id,sitename_txt,topic_*,wam_i,url,'+sort}
 
@@ -117,9 +117,9 @@ def index():
     queried_doc = None
     if query is not None:
         """
-        queried_doc, docs = get_similar(query, 
-                                        wam_boost=request.args.get('wam_boost'), 
-                                        topic_boost=request.args.get('topic_boost', 1000), 
+        queried_doc, docs = get_similar(query,
+                                        wam_boost=request.args.get('wam_boost'),
+                                        topic_boost=request.args.get('topic_boost', 1000),
                                         delta=request.args.get('delta', 0.15),
                                         naive=bool(request.args.get('naive', False)),
                                         use_titles=bool(request.args.get('use_titles', False)))
@@ -136,5 +136,6 @@ def index():
 
     return render_template('index.html', docs=docs, queried_doc=queried_doc, qs=re.sub(r'id=\d+(&)?', '', request.query_string).replace('&&', '&'), details=details)
 
-app.debug = True
-app.run()
+if __name__ == '__main__':
+    app.debug = True
+    app.run()
