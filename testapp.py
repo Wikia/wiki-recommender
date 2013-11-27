@@ -15,7 +15,7 @@ SOLR_URL = 'http://dev-search.prod.wikia.net:8983/solr/xwiki'
 
 @app.template_filter('topics_sorted')
 def get_topics_sorted(doc):
-    return sorted([(key, doc[key]) for key in doc.keys() if re.match(r'topic_\d+_tf', key) is not None], reverse=True, key=lambda x:x[1])
+    return sorted([(key, doc[key]) for key in doc.keys() if re.match(r'topic_\d+_tf', key) is not None and doc[key] > 0], reverse=True, key=lambda x:x[1])
 
 @app.template_filter('intersection_count')
 def intersection_count(tuples1, tuples2):
@@ -23,7 +23,7 @@ def intersection_count(tuples1, tuples2):
 
 @app.template_filter('topics_sorted_keys')
 def get_topics_sorted_keys(doc):
-    return sorted([key for key in doc.keys() if re.match(r'topic_\d+_tf', key) is not None], reverse=True, key=lambda x:x[1])
+    return sorted([key for key in doc.keys() if re.match(r'topic_\d+_tf', key) is not None and doc[key] > 0], reverse=True, key=lambda x:x[1])
 
 @app.template_filter('append')
 def append(list, val):
