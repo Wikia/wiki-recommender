@@ -4,6 +4,7 @@ import sys
 import re
 import random
 import json
+import os
 
 app = Flask(__name__)
 
@@ -11,7 +12,7 @@ app = Flask(__name__)
 Might be a good candidate for a config file.
 Another interesting idea w.r.t. automation: argparse + chef recipes
 """
-SOLR_URL = json.loads(open('config.json').read())['solr_url']
+SOLR_URL = json.loads(open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'config.json')).read())['solr_url']
 
 
 @app.template_filter('topics_sorted')
