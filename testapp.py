@@ -3,6 +3,7 @@ import requests
 import sys
 import re
 import random
+import json
 
 app = Flask(__name__)
 
@@ -10,7 +11,7 @@ app = Flask(__name__)
 Might be a good candidate for a config file.
 Another interesting idea w.r.t. automation: argparse + chef recipes
 """
-SOLR_URL = 'http://dev-search.prod.wikia.net:8983/solr/xwiki'
+SOLR_URL = json.loads(open('config.json').read())['solr_url']
 
 
 @app.template_filter('topics_sorted')
