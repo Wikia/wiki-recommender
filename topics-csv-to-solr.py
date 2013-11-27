@@ -8,7 +8,6 @@ with open(sys.argv[1], 'r') as fl:
         doc = dict(id=wid)
         for grouping in ploded[1:]:
             topic, value = grouping.split('-')
-            if value == 'null': value = None
             doc['topic_%s_tf' % topic] = {'set': value}
         docs += [doc]
 
