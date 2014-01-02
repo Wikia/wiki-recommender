@@ -19,7 +19,7 @@ with open(sys.argv[1], 'r') as fl:
                  ]
             )
         except (ValueError, KeyError) as e:
-            print sys.exc_info(e)
+            print sys.exc_info()
         for line in lines[i:i+100]:
             ploded = line[:-1].split(',')
             doc_id = ploded[0]
