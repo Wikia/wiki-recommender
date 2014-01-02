@@ -6,11 +6,12 @@ params = {'fl': 'id,title_en,url,wid,wam,backlinks', 'wt': 'json'}
 
 docs = []
 with open(sys.argv[1], 'r') as fl:
-    for i in range(0, len(fl), 100):
-        print "%d / %d" % (i, len(fl))
+    lines = [line for line in fl]
+    for i in range(0, len(lines), 100):
+        print "%d / %d" % (i, len(lines))
         post_docs = []
         try:
-            params['q'] = ' OR '.join(['id:'+line.split(',')[0] for line in fl[i:i+100]])
+            params['q'] = ' OR '.join(['id:'+line.split(',')[0] for line in lines[i:i+100]])
             docs = dict(
                 [(doc['id'], doc)
                  for doc in requests.get('http://search-s10:8983/solr/main/select', params=params)
@@ -19,8 +20,7 @@ with open(sys.argv[1], 'r') as fl:
             )
         except (ValueError, KeyError) as e:
             print e
-        for line in fl[i:i+100]:
-
+        for line in lines[i:i+100]:
             ploded = line[:-1].split(',')
             doc_id = ploded[0]
             doc = docs.get(doc_id, {'id': doc_id})
