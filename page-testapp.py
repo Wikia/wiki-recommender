@@ -34,9 +34,9 @@ def append(list, val):
 
 
 def get_random_grouping():
-    params = dict(rows=50, q='*:*', sort='random_'+time.time()+' asc', wt='json', fl='id,title_en,topic_*,url,wid')
+    params = dict(rows=25, q='title_en:*', sort='views desc', wt='json', fl='id,title_en,topic_*,url,wid,wikititle_en')
+    params['start'] = request.args.get('start', int(random.randint(0, 50000)))
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
-    random.shuffle(docs)
     return docs
 
 
@@ -102,11 +102,11 @@ def as_euclidean(query):
 
     params = {'wt':'json',
               #'q':'-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in keys])),
-              'q':'*:*',
+              'q':'title_en:*',
               'sort': sort + ' asc',
               'rows':20,
               'fq': '-id:%s' % doc['id'],
-              'fl':'id,title_en,topic_*,wam,wid,url,'+sort}
+              'fl':'id,wikititle_en,title_en,topic_*,wam,wid,url,'+sort}
 
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
     map(lambda x: x.__setitem__('score', x[sort]), docs)
@@ -131,14 +131,20 @@ def index():
     else:
         docs = get_random_grouping()
 
+    details = {}
     NO_IMAGE_URL = "http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png"
-    #details = requests.get("http://www.wikia.com/api/v1/Wikis/Details/", params={'ids':",".join([doc['id'] for doc in docs])}).json().get('items', {})
-    #for doc in docs:
-    #    if not details.get(doc['id'], {}).get('image', ''):
-    #        details[doc['id']] = dict(details.get(doc['id'], {}).items() + [('image', NO_IMAGE_URL)])
+    for doc in docs:
+        items = [{}]
+        try:
+            items = requests.get(doc['url'].split('/wiki')[0]+'/api/v1/Articles/Details', 
+                                              params={'ids': doc['id'].split('_')[1]}).json().get('items', {123: {}}).values()
+        except:
+            pass
+        details[doc['id']] = items[0] if len(items) > 0 else {}
+        details[doc['id']]['thumbnail'] = details[doc['id']].get('thumbnail', NO_IMAGE_URL)
 
-    return render_template('page_index.html', docs=docs, queried_doc=queried_doc, qs=re.sub(r'id=\d+(&)?', '', request.query_string).replace('&&', '&'))
+    return render_template('page_index.html', docs=docs, details=details, queried_doc=queried_doc, qs=re.sub(r'id=\d+(&)?', '', request.query_string).replace('&&', '&'))
 
 if __name__ == '__main__':
     app.debug = True
-    app.run()
+    app.run('0.0.0.0')

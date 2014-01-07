@@ -12,7 +12,7 @@
     <script src="/static/js/bootstrap.min.js"></script>
     <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Testing Topics on Wikis</h1>
     {% if queried_doc %}
-    <h2>Wikis similar to {{queried_doc['sitename_txt']|join('')}}</h2>
+    <h2>Pages similar to {{queried_doc['wikititle_en']}} -- {{queried_doc['title_en']|join('')}}</h2>
     <small>
     <ul class="list-inline">
     {% for grouping in queried_doc|topics_sorted %}
@@ -25,17 +25,16 @@
     <div class="well">
       <div class="row">
 	<div class="col-md-3 wiki-image">
-	   <a href="{{doc['url']}}"><!-- <img class="img-thumbnail" src="" alt=""/></a> -->
+	   <a href="{{doc['url']}}"><img class="img-thumbnail" src="{{ details[doc['id']]['thumbnail'] }}" alt=""/></a>
 	</div>
 	<div class="col-md-9 content-wrapper">
 	  <div class="row">
 	    <div class="row">
-	      <h3 style="text-align: left;"><a href="{{doc['url']}}">{{ doc['title_en']|join('') }}</a> <a href="?{{qs}}&id={{ doc['id'] }}" title="More like this..."><span class="glyphicon glyphicon-eye-open"></span></a></h3>
+	      <h3 style="text-align: left;"><a href="{{doc['url']}}">{{ doc['wikititle_en'] }} -- {{ doc['title_en']|join('') }}</a> <a href="?{{qs}}&id={{ doc['id'] }}" title="More like this..."><span class="glyphicon glyphicon-eye-open"></span></a></h3>
 	    </div>
 	    <div class="row">
-	      <p><small>(WAM: {{doc['wam]}}, Distance: {{doc['score']}})
-		{% if queried_doc %}(shares <b>{{doc|topics_sorted|intersection_count(queried_doc|topics_sorted)}}</b> topics){% endif %}
-		  </small>
+	      <p>
+		{% if queried_doc %}<small>(Distance: {{doc['score']}}) (shares <b>{{doc|topics_sorted|intersection_count(queried_doc|topics_sorted)}}</b> topics)</small>{% endif %}
               </p>
 	    </div>
 	    <div class="row">
