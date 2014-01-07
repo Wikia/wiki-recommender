@@ -1,6 +1,7 @@
 import requests
 import sys
 import json
+import random
 from multiprocessing import Pool
 
 def runit(tup):
@@ -42,6 +43,6 @@ def runit(tup):
 
 with open(sys.argv[1], 'r') as fl:
     lines = [line for line in fl]
-    lines.reverse()
+    random.shuffle(lines)
     outof = len(lines)
     Pool(processes=16).map(runit, [(i, outof) for i in range(0, outof, 100)])
