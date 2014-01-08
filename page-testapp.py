@@ -102,11 +102,14 @@ def as_euclidean(query):
 
     params = {'wt':'json',
               #'q':'-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in keys])),
-              'q':'title_en:*',
+              'q':'title_en:* AND -(%s)' % " AND ".join(["%s:0" % key for key in keys]),
               'sort': sort + ' asc',
               'rows':20,
               'fq': '-id:%s' % doc['id'],
               'fl':'id,wikititle_en,title_en,topic_*,wam,wid,url,'+sort}
+
+    if request.args.get('nosame'):
+        params['q'] += ' AND -wid:'+str(doc['wid'])
 
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
     map(lambda x: x.__setitem__('score', x[sort]), docs)
