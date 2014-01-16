@@ -34,7 +34,7 @@ def append(list, val):
 
 
 def get_random_grouping():
-    params = dict(rows=25, q='title_en:*', sort='views desc', wt='json', fl='id,title_en,topic_*,url,wid,wikititle_en')
+    params = dict(rows=25, q='title_en:* AND -is_video:true', sort='views desc', wt='json', fl='id,title_en,topic_*,url,wid,wikititle_en')
     params['start'] = request.args.get('start', int(random.randint(0, 50000)))
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
     return docs
@@ -102,7 +102,7 @@ def as_euclidean(query):
 
     params = {'wt':'json',
               #'q':'-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in keys])),
-              'q':'title_en:* AND -(%s)' % " AND ".join(["%s:0" % key for key in keys]),
+              'q':'title_en:* AND -is_video:true AND -(%s)' % " AND ".join(["%s:0" % key for key in keys]),
               'sort': sort + ' asc',
               'rows':20,
               'fq': '-id:%s' % doc['id'],
