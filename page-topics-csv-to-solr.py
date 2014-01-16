@@ -6,7 +6,7 @@ from multiprocessing import Pool
 
 def runit(tup):
     i, outof = tup
-    params = {'fl': 'id,title_en,url,wid,wam,backlinks,views,wikititle_en', 'wt': 'json', 'rows': 500}
+    params = {'fl': 'id,title_en,url,wid,wam,backlinks,views,wikititle_en,is_video', 'wt': 'json', 'rows': 500}
     docs = {}
     print len(lines)
     with open(sys.argv[1], 'r') as fl:
@@ -43,6 +43,6 @@ def runit(tup):
 
 with open(sys.argv[1], 'r') as fl:
     lines = [line for line in fl]
-    random.shuffle(lines)
+    #random.shuffle(lines)
     outof = len(lines)
     Pool(processes=16).map(runit, [(i, outof) for i in range(0, outof, 100)])
