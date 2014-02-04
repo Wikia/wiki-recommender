@@ -4,6 +4,7 @@ import sys
 import re
 import random
 import json
+import time
 import os
 
 app = Flask(__name__)
@@ -12,7 +13,12 @@ app = Flask(__name__)
 Might be a good candidate for a config file.
 Another interesting idea w.r.t. automation: argparse + chef recipes
 """
-SOLR_URL = json.loads(open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'config.json')).read())['solr_url']
+SOLR_URL = json.loads(open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'config.json')).read())['solr_url'].replace('xwiki', 'main')
+
+
+@app.template_filter('strip_file')
+def strip_file(doc_title):
+    return doc_title.replace('File:', '')
 
 
 @app.template_filter('topics_sorted')
@@ -33,9 +39,9 @@ def append(list, val):
 
 
 def get_random_grouping():
-    params = dict(rows=50, q='*:*', sort='wam_i desc', wt='json', fl='id,sitename_txt,topic_*,top_articles_mv_en,wam_i')
+    params = dict(rows=25, q='is_video:true', sort='views desc', wt='json', fl='id,title_en,topic_*,url,wid,wikititle_en')
+    params['start'] = request.args.get('start', int(random.randint(0, 50000)))
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
-    random.shuffle(docs)
     return docs
 
 
@@ -58,7 +64,7 @@ def get_similar_old(query, wam_boost=None, topic_boost='1000', delta=0.15, naive
     else:
         q = '*:*'
 
-    params = dict(rows=20, q=q, bf=bf, wt='json', defType='edismax', fl='id,sitename_txt,topic_*')
+    params = dict(rows=20, q=q, bf=bf, wt='json', defType='edismax', fl='id,title_en,url,wid,topic_*')
 
     if naive:
         params['q'] = " OR ".join(['%s:[%.3f TO %.3f]' % (x[0], float(x[1]) - float(delta), float(x[1]) + float(delta)) for x in get_topics_sorted(doc)[:4]])
@@ -66,28 +72,7 @@ def get_similar_old(query, wam_boost=None, topic_boost='1000', delta=0.15, naive
         if wam_boost is not None:
             params['bf'] = ['wam_i^%s' % wam_boost]
 
-    """ TODO -- needs solr query syntax, sooooo
-    if use_titles:
-        params['bq'] = " OR ".join(['("%s")' % article for article in doc.get('top_articles_mv_en', [])[:10]])
-        params['qf'] = "top_articles_mv_en,top_categories_mv_en,sitename_txt,description_en,headline_txt"
-    """
-
     return (doc, requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', []))
-
-def mlt(query):
-    doc_response = requests.get('%s/select/' % SOLR_URL, params=dict(rows=1, q='id:%s' % query, wt='json')).json()
-    doc = doc_response.get('response', {}).get('docs', [None])[0]
-    if doc is None:
-        return None, []  # same diff
-
-    params = {'wt':'json',
-              'q':'-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in get_topics_sorted_keys(doc)])),
-              'bf': ['%s^10' for key in get_topics_sorted_keys(doc)] + ['wam_i'],
-              'rows':20,
-              'fl':'id,sitename_txt,topic_*,wam_i,url'}
-
-    return (doc, requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', []))
-
 
 def as_euclidean(query):
     doc_response = requests.get('%s/select/' % SOLR_URL, params=dict(rows=1, q='id:%s' % query, wt='json')).json()
@@ -100,12 +85,14 @@ def as_euclidean(query):
     sort = 'dist(2, vector(%s), vector(%s))' % (", ".join(keys), ", ".join(['%.8f' % doc[key] for key in keys]))
 
     params = {'wt':'json',
-              #'q':'-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in keys])),
-              'q':'*:*',
+              'q':'title_en:* AND is_video:true AND -(%s)' % " AND ".join(["%s:0" % key for key in keys]),
               'sort': sort + ' asc',
               'rows':20,
               'fq': '-id:%s' % doc['id'],
-              'fl':'id,sitename_txt,topic_*,wam_i,url,'+sort}
+              'fl':'id,wikititle_en,title_en,topic_*,wam,wid,url,'+sort}
+
+    if request.args.get('nosame'):
+        params['q'] += ' AND -wid:'+str(doc['wid'])
 
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
     map(lambda x: x.__setitem__('score', x[sort]), docs)
@@ -130,14 +117,20 @@ def index():
     else:
         docs = get_random_grouping()
 
+    details = {}
     NO_IMAGE_URL = "http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png"
-    details = requests.get("http://www.wikia.com/api/v1/Wikis/Details/", params={'ids':",".join([doc['id'] for doc in docs])}).json().get('items', {})
     for doc in docs:
-        if not details.get(doc['id'], {}).get('image', ''):
-            details[doc['id']] = dict(details.get(doc['id'], {}).items() + [('image', NO_IMAGE_URL)])
+        items = [{}]
+        try:
+            items = requests.get(doc['url'].split('/wiki')[0]+'/api/v1/Articles/Details', 
+                                              params={'ids': doc['id'].split('_')[1]}).json().get('items', {123: {}}).values()
+        except:
+            pass
+        details[doc['id']] = items[0] if len(items) > 0 else {}
+        details[doc['id']]['thumbnail'] = details[doc['id']].get('thumbnail', NO_IMAGE_URL)
 
-    return render_template('index.html', docs=docs, queried_doc=queried_doc, qs=re.sub(r'id=\d+(&)?', '', request.query_string).replace('&&', '&'), details=details)
+    return render_template('video_index.html', docs=docs, details=details, queried_doc=queried_doc, qs=re.sub(r'id=\d+(&)?', '', request.query_string).replace('&&', '&'))
 
 if __name__ == '__main__':
     app.debug = True
-    app.run('0.0.0.0', port=5002)
+    app.run('0.0.0.0')

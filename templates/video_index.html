@@ -10,9 +10,9 @@
   <body class="container">
     <script src="http://code.jquery.com/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
-    <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Testing Topics on Pages</h1>
+    <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Testing Topics on Videos</h1>
     {% if queried_doc %}
-    <h2>Pages similar to {{queried_doc['wikititle_en']}} -- {{queried_doc['title_en']|join('')}}</h2>
+    <h2>Videos similar to {{queried_doc['title_en']|join('')}}</h2>
     <small>
     <ul class="list-inline">
     {% for grouping in queried_doc|topics_sorted %}
@@ -30,7 +30,7 @@
 	<div class="col-md-9 content-wrapper">
 	  <div class="row">
 	    <div class="row">
-	      <h3 style="text-align: left;"><a href="{{doc['url']}}">{{ doc['wikititle_en'] }} -- {{ doc['title_en']|join('') }}</a> <a href="?{{qs}}&id={{ doc['id'] }}" title="More like this..."><span class="glyphicon glyphicon-eye-open"></span></a></h3>
+	      <h3 style="text-align: left;"><a href="{{doc['url']}}">{{ doc['title_en']|join('')|strip_file }}</a> <a href="?{{qs}}&id={{ doc['id'] }}" title="More like this..."><span class="glyphicon glyphicon-eye-open"></span></a></h3>
 	    </div>
 	    <div class="row">
 	      <p>
