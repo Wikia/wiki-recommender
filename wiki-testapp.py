@@ -12,7 +12,8 @@ app = Flask(__name__)
 Might be a good candidate for a config file.
 Another interesting idea w.r.t. automation: argparse + chef recipes
 """
-SOLR_URL = json.loads(open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'config.json')).read())['solr_url']
+with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.json'), 'r') as config:
+    SOLR_URL = json.loads(config.read())['solr_url'] + 'xwiki'
 
 
 @app.template_filter('topics_sorted')
