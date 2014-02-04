@@ -60,7 +60,7 @@
     </div>
     {% endfor %}
     <script type="text/javascript">
-        jQuery("li.topicinfo").tooltip({title: function(){
+        jQuery("li.topicinfo").tooltip({placement: 'bottom', title: function(){
             return topic_data[$(this).data('topic')];
         }});
     </script>
