@@ -103,7 +103,7 @@ def as_euclidean(query):
 
     params = {'wt':'json',
               #'q':'-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in keys])),
-              'q':'*:*',
+              'q':'has_topics_b:true',
               'sort': sort + ' asc',
               'rows':20,
               'fq': '-id:%s' % doc['id'],
