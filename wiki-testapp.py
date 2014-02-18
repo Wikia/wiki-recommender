@@ -34,7 +34,8 @@ def append(list, val):
 
 
 def get_random_grouping():
-    params = dict(rows=50, q='*:*', sort='wam_i desc', wt='json', fl='id,sitename_txt,topic_*,top_articles_mv_en,wam_i')
+    params = dict(rows=50, q='has_topics_b:true', sort='wam_i desc', wt='json',
+                  fl='id,sitename_txt,topic_*,top_articles_mv_en,wam_i')
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
     random.shuffle(docs)
     return docs
