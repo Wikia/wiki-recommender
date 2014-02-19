@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, Response
+from lib.filters import get_topics_sorted_keys, intersection_count, get_topics_sorted, strip_file, append
 import requests
 import re
 import random
@@ -7,46 +8,10 @@ import os
 
 app = Flask(__name__)
 
-"""
-Might be a good candidate for a config file.
-Another interesting idea w.r.t. automation: argparse + chef recipes
-"""
-with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.json'), 'r') as config:
-    SOLR_URL = json.loads(config.read())['solr_url'] + 'main'
-
-
-@app.template_filter('strip_file')
-def strip_file(doc_title):
-    return doc_title.replace('File:', '')
-
-
-@app.template_filter('topics_sorted')
-def get_topics_sorted(doc):
-    return sorted([(key, doc[key]) for key in doc.keys()
-                   if re.match(r'topic_\d+_tf', key) is not None and doc[key] > 0],
-                  reverse=True,
-                  key=lambda x: x[1])
-
-
-@app.template_filter('intersection_count')
-def intersection_count(tuples1, tuples2):
-    return len([x for x in tuples1 if x[0] in [y[0] for y in tuples2]])
-
-
-@app.template_filter('topics_sorted_keys')
-def get_topics_sorted_keys(doc):
-    return sorted([key for key in doc.keys() if re.match(r'topic_\d+_tf', key) is not None and doc[key] > 0],
-                  reverse=True,
-                  key=lambda x: x[1])
-
-
-@app.template_filter('append')
-def append(lst, val):
-    return lst + [val]
-
 
 def get_random_grouping():
-    params = dict(rows=25, q='is_video:true', sort='views desc', wt='json', fl='id,title_en,topic_*,url,wid,wikititle_en')
+    params = dict(rows=25, q='is_video:true', sort='views desc',
+                  wt='json', fl='id,title_en,topic_*,url,wid,wikititle_en')
     params['start'] = request.args.get('start', int(random.randint(0, 50000)))
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
     return docs
@@ -111,10 +76,27 @@ def index():
                            queried_doc=queried_doc,
                            qs=re.sub(r'id=\d+(&)?', '', request.query_string).replace('&&', '&'))
 
-video_topic_data = None
 
-if __name__ == '__main__':
+def main():
+    global SOLR_URL, video_topic_data, app
+    """
+    Might be a good candidate for a config file.
+    Another interesting idea w.r.t. automation: argparse + chef recipes
+    """
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.json'), 'r') as config:
+        SOLR_URL = json.loads(config.read())['solr_url'] + 'main'
+
     with open('video-999topics-words.txt', 'r') as topics_file:
         video_topic_data = dict([('topic_%d_tf' % x[0], x[1][:-1]) for x in enumerate(topics_file)])
+
     app.debug = True
+    app.add_template_filter(get_topics_sorted_keys, 'topics_sorted_keys')
+    app.add_template_filter(intersection_count, 'intersection_count')
+    app.add_template_filter(append, 'append')
+    app.add_template_filter(strip_file, 'strip_file')
+    app.add_template_filter(get_topics_sorted, 'topics_sorted')
     app.run('0.0.0.0')
+
+if __name__ == '__main__':
+    video_topic_data = None
+    main()
