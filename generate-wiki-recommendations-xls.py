@@ -31,7 +31,8 @@ def main():
         print wiki_id
         try:
             wiki_doc, recommendations = as_euclidean(wiki_id)
-        except ValueError:
+        except ValueError as e:
+            print e
             continue
         if 'url' not in wiki_doc or not recommendations:
             continue
