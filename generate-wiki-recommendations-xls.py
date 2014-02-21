@@ -57,7 +57,7 @@ def main():
             range(1, len(wiki_doc['recommendation_urls'])+1))
 
         names_worksheet.write(i, 0, ''.join(wiki_doc['sitename_txt']))
-        map(lambda j: names_worksheet.write(i, j, wiki_doc['recommendations_sitenames'][j-1]),
+        map(lambda j: names_worksheet.write(i, j, wiki_doc['recommendation_sitenames'][j-1]),
             range(1, len(wiki_doc['recommendation_sitenames'])+1))
 
     my_workbook.save(name+"-wiki-recommendations.xls")
