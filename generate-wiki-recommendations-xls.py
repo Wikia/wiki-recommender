@@ -50,15 +50,15 @@ def main():
         i = counter + 1
         ids_worksheet.write(i, 0, wiki_doc['id'])
         map(lambda j: ids_worksheet.write(i, j, wiki_doc['recommendation_ids'][j-1]),
-            range(1, len(wiki_doc['recommendations_ids'])+1))
+            range(1, len(wiki_doc['recommendation_ids'])+1))
 
         urls_worksheet.write(i, 0, wiki_doc['url'])
         map(lambda j: urls_worksheet.write(i, j, wiki_doc['recommendation_urls'][j-1]),
-            range(1, len(wiki_doc['recommendations_urls'])+1))
+            range(1, len(wiki_doc['recommendation_urls'])+1))
 
         names_worksheet.write(i, 0, ''.join(wiki_doc['sitename_txt']))
         map(lambda j: names_worksheet.write(i, j, wiki_doc['recommendations_sitenames'][j-1]),
-            range(1, len(wiki_doc['recommendations_sitenames'])+1))
+            range(1, len(wiki_doc['recommendation_sitenames'])+1))
 
     my_workbook.save(name+"-wiki-recommendations.xls")
 
