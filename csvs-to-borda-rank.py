@@ -4,10 +4,11 @@ from collections import defaultdict
 
 
 def borda(list_of_lists):
-    dct = defaultdict(int)
-    [dct.__setitem__(val, rank + dct[val]) for li in list_of_lists
+    dct = defaultdict(list)
+    [dct.__setitem__(val, [rank] + dct[val]) for li in list_of_lists
      for enumed in list(enumerate(li)) for rank, val in enumed]
-    return map(lambda y: y[0], sorted(dct.items(), key=lambda x: x[1]))
+    # 1000000 is an arbtrarily big number for instances that aren't included in borda
+    return map(lambda y: y[0], sorted(dct.items(), key=lambda x: sum(x[1] + [1000000] * (len(x) - len(list_of_lists)))))
 
 
 def wiki_data_for_ids(ids):
