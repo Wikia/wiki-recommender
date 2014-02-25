@@ -79,7 +79,7 @@ def main():
     names_worksheet.write(0, 0, 'Wiki')
     names_worksheet.write(0, 1, 'Recommendations')
 
-    docids = sorted(recommendations.keys(), key=lambda y: wiki_data.get(y[0], {}).get('wam_score', 0), reverse=True)
+    docids = sorted(recommendations.keys(), key=lambda y: wiki_data.get(y, {}).get('wam_score', 0), reverse=True)
     for counter, docid in enumerate(docids):
         row = counter + 1
         line = [docid] + [z[0] for z in recommendations[docid][:25]]
