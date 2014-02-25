@@ -2,6 +2,8 @@ import sys
 import requests
 import xlrd
 import xlwt
+import os
+from lib.wikis import wiki_data_for_ids
 from datetime import datetime
 from collections import defaultdict
 from multiprocessing import Pool
@@ -21,19 +23,22 @@ def borda(list_of_lists):
     return sorted(normalized, key=lambda x: x[1])
 
 
-def wiki_data_for_ids(ids):
-    return requests.get('http://www.wikia.com/api/v1/Wikis/Details',
-                        params={'ids': ','.join(ids)}).json().get('items', {})
-
-
 def dict_from_args():
     doc_to_recs = defaultdict(list)
-    for arg in sys.argv[1:]:
-        book = xlrd.open_workbook(arg)
+
+    def do_fname(filename):
+        book = xlrd.open_workbook(filename)
         sheet = book.sheets()[0]
         for i in range(1, sheet.nrows):
             row_vals = sheet.row_values(i)
             doc_to_recs[row_vals[0]].append(row_vals[1:])
+
+    for arg in sys.argv[1:]:
+        if os.path.isfile(arg):
+            do_fname(arg)
+        elif os.path.isdir(arg):
+            map(do_fname, [arg+'/'+fl for fl in os.listdir(arg)])
+
     return doc_to_recs
 
 

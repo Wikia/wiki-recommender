@@ -72,3 +72,8 @@ def csv_to_solr(fl, num_topics=999):
                            headers={'Content-type': 'application/json'})
 
     return {'reinitialize': reinitialize.content, 'update': update.content}
+
+
+def wiki_data_for_ids(ids):
+    return requests.get('http://www.wikia.com/api/v1/Wikis/Details',
+                        params={'ids': ','.join(ids)}).json().get('items', {})
