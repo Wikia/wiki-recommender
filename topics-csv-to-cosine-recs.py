@@ -1,6 +1,7 @@
 import sys
 import itertools
 import xlwt
+import traceback
 from lib.wikis import wiki_data_for_ids
 from collections import defaultdict
 from scipy.spatial.distance import cosine
@@ -27,16 +28,18 @@ def get_recommendations(docid_to_topics):
     params = [(docid_to_topics[x.split('_')[0]], docid_to_topics[x.split('_')[1]]) for x in relations]
 
     print "Computing relations"
-    computed = Pool(processes=4).map(cosine, params)
+    computed = Pool(processes=4).map(tup_cos, params)
     distances = zip(relations, computed)
 
     print "Storing distances"
-    for relation, distance in distances:
+
+    max_distance = max(distance for relation, distance in distances)
+    for relation, distance in filter(lambda y: y[1] != max_distance, distances):
         a, b = relation.split("_")
         docid_distances[a].append((b, distance))
         docid_distances[b].append((a, distance))
 
-    for doc in distances:
+    for doc in docid_distances:
         docid_distances[doc] = sorted(docid_distances[doc], key=lambda x: x[1])
 
     return docid_distances
@@ -56,6 +59,8 @@ def main():
 
     recommendations = get_recommendations(docid_to_topics)
     ids = recommendations.keys()
+
+    print "Getting Wiki Data"
     wiki_data = {}
     r = Pool(processes=4).map_async(wiki_data_for_ids, [ids[i:i+20] for i in range(0, len(ids), 20)])
     map(wiki_data.update, r.get())
@@ -77,9 +82,9 @@ def main():
     docids = sorted(recommendations.keys(), key=lambda y: wiki_data.get(y[0], {}).get('wam_score', 0), reverse=True)
     for counter, docid in enumerate(docids):
         row = counter + 1
-        line = recommendations[docid]
+        line = [docid] + [z[0] for z in recommendations[docid]]
         for col in range(0, len(line)):
-            ids_worksheet.write(row, col, line[col])
+            ids_worksheet.write(row, col, str(line[col]))
             urls_worksheet.write(row, col, wiki_data.get(line[col], {}).get('url', '?'))
             names_worksheet.write(row, col, wiki_data.get(line[col], {}).get('title', '?'))
 
