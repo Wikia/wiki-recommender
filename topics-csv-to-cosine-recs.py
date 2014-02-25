@@ -84,6 +84,7 @@ def main():
         row = counter + 1
         line = [docid] + [z[0] for z in recommendations[docid]]
         for col in range(0, len(line)):
+            print col
             ids_worksheet.write(row, col, str(line[col]))
             urls_worksheet.write(row, col, wiki_data.get(line[col], {}).get('url', '?'))
             names_worksheet.write(row, col, wiki_data.get(line[col], {}).get('title', '?'))
@@ -91,7 +92,6 @@ def main():
     fname = 'cosine-recommendations-%s.xls' % (datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
     my_workbook.save(fname)
     print fname
-
 
 
 if __name__ == '__main__':
