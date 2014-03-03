@@ -13,6 +13,8 @@ def borda(list_of_lists):
     dct = defaultdict(list)
     for li in list_of_lists:
         for rank, val in list(enumerate(li)):
+            if rank > 10:
+                break
             dct[val].append(rank)
 
     lowest_rank = max([rank for val, ranks in dct.items() for rank in ranks]) + 1
