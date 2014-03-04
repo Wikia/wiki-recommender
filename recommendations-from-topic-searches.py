@@ -37,11 +37,13 @@ def main():
         names_worksheet.write(0, 0, 'Wiki')
         names_worksheet.write(0, 1, 'Recommendations')
 
-        for counter, grouping in enumerate(terms_and_recs):
-            print grouping
-            this_wiki, recommendations = grouping
-            line = [this_wiki[0]] + [r['id'] for r in recommendations]
-            row = counter + 1
+        row = 0
+        for this_wiki, recommendations in terms_and_recs:
+            try:
+                line = [this_wiki[0]] + [r['id'] for r in recommendations]
+            except TypeError:
+                continue
+            row += 1
             for col in range(0, len(recommendations)):
                 ids_worksheet.write(row, col, line[col])
                 urls_worksheet.write(row, col, wiki_data.get(line[col], {}).get('url', '?'))
