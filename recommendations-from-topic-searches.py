@@ -37,6 +37,11 @@ def main():
         names_worksheet.write(0, 0, 'Wiki')
         names_worksheet.write(0, 1, 'Recommendations')
 
+        topics_worksheet = my_workbook.add_sheet("Wiki Topics")
+        topics_worksheet.write(0, 0, 'Wiki ID')
+        topics_worksheet.write(0, 1, 'Wiki Name')
+        topics_worksheet.write(0, 2, 'Topic')
+
         row = 0
         tr_sorted = sorted(filter(lambda y: wiki_data.get(y[0][0]), terms_and_recs),
                            key=lambda x: wiki_data.get(x[0][0], {}).get('wam_score', 0) if x else 0,
@@ -49,6 +54,10 @@ def main():
             if len(line) < 2:
                 continue
             row += 1
+            if len(this_wiki) >= 3:
+                topics_worksheet.write(row, 0, this_wiki[0])
+                topics_worksheet.write(row, 1, wiki_data.get(this_wiki[0], {}).get('headline', this_wiki[1]))
+                topics_worksheet.write(row, 2, this_wiki[2])
             for col in range(0, len(line)):
                 ids_worksheet.write(row, col, line[col])
                 urls_worksheet.write(row, col, wiki_data.get(line[col], {}).get('url', '?'))
