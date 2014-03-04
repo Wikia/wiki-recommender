@@ -1,7 +1,7 @@
 import sys
 import requests
 import xlwt
-import datetime
+from datetime import datetime
 from multiprocessing import Pool
 from lib.wikis import wiki_data_for_ids
 
@@ -12,7 +12,7 @@ def cw_search(term):
 
 
 def main():
-    p = Pool(processes=8)
+    p = Pool(processes=16)
     with open(sys.argv[1], 'r') as fl:
         lines_split = [ln.strip().split(',') for ln in fl.readlines() if len(ln.strip().split(',')) >= 3]
         terms = [tp[2] for tp in lines_split]
