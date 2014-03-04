@@ -38,7 +38,8 @@ def main():
         names_worksheet.write(0, 1, 'Recommendations')
 
         row = 0
-        for this_wiki, recommendations in terms_and_recs:
+        tr_sorted = sorted(terms_and_recs, lambda x: wiki_data.get(x[0], {}).get('wam_score', 0), reverse=True)
+        for this_wiki, recommendations in tr_sorted:
             try:
                 line = [this_wiki[0]] + [r['id'] for r in recommendations]
             except TypeError:
