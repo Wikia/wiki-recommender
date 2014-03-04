@@ -38,6 +38,7 @@ def main():
         names_worksheet.write(0, 1, 'Recommendations')
 
         for counter, grouping in enumerate(terms_and_recs):
+            print grouping
             this_wiki, recommendations = grouping
             line = [this_wiki[0]] + [r['id'] for r in recommendations]
             row = counter + 1
