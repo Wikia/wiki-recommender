@@ -38,7 +38,7 @@ def main():
         names_worksheet.write(0, 1, 'Recommendations')
 
         row = 0
-        tr_sorted = sorted(terms_and_recs,
+        tr_sorted = sorted(filter(lambda y: wiki_data.get(y[0]), terms_and_recs),
                            key=lambda x: wiki_data.get(x[0], {}).get('wam_score', 0) if x else 0,
                            reverse=True)
         for this_wiki, recommendations in tr_sorted:
