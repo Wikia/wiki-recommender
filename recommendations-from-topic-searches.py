@@ -14,7 +14,7 @@ def cw_search(term):
 def main():
     p = Pool(processes=8)
     with open(sys.argv[1], 'r') as fl:
-        lines_split = [ln.strip().split(',') for ln in fl.readlines()]
+        lines_split = [ln.strip().split(',') for ln in fl.readlines() if len(ln.strip().split(',')) >= 3]
         terms = [tp[2] for tp in lines_split]
         terms_and_recs = zip(lines_split, p.map_async(cw_search, terms).get())
 
