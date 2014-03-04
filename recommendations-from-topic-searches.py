@@ -49,3 +49,6 @@ def main():
         fname = 'topic-recommendations-%s.xls' % (datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
         my_workbook.save(fname)
         print fname
+
+if __name__ == '__main__':
+    main()
