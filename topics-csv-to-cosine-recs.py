@@ -28,7 +28,7 @@ def get_recommendations(docid_to_topics):
     params = [(docid_to_topics[x.split('_')[0]], docid_to_topics[x.split('_')[1]]) for x in relations]
 
     print "Computing relations"
-    computed = Pool(processes=4).map(tup_cos, params)
+    computed = Pool(processes=8).map(tup_cos, params)
     distances = zip(relations, computed)
 
     print "Storing distances"
@@ -62,7 +62,7 @@ def main():
 
     print "Getting Wiki Data"
     wiki_data = {}
-    r = Pool(processes=4).map_async(wiki_data_for_ids, [ids[i:i+20] for i in range(0, len(ids), 20)])
+    r = Pool(processes=8).map_async(wiki_data_for_ids, [ids[i:i+20] for i in range(0, len(ids), 20)])
     map(wiki_data.update, r.get())
 
     print "Writing Data"
