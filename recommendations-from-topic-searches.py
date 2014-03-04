@@ -22,7 +22,7 @@ def main():
         wiki_data = {}
         r = p.map_async(wiki_data_for_ids, [ids[i:i+20] for i in range(0, len(ids), 20)])
         map(wiki_data.update, r.get())
-        map(wiki_data.update, [r for terms, recs in terms_and_recs for r in recs])
+        map(wiki_data.update, [{r['id']: r} for terms, recs in terms_and_recs for r in recs])
 
         my_workbook = xlwt.Workbook()
         ids_worksheet = my_workbook.add_sheet("Wiki IDs")
@@ -43,8 +43,10 @@ def main():
                 line = [this_wiki[0]] + [r['id'] for r in recommendations]
             except TypeError:
                 continue
+            if len(line) < 2:
+                continue
             row += 1
-            for col in range(0, len(recommendations)):
+            for col in range(0, len(line)):
                 ids_worksheet.write(row, col, line[col])
                 urls_worksheet.write(row, col, wiki_data.get(line[col], {}).get('url', '?'))
                 names_worksheet.write(row, col, "%s" % (wiki_data.get(line[col], {}).get('title', '?')))
