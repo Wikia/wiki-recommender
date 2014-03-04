@@ -41,7 +41,7 @@ def main():
         tr_sorted = sorted(terms_and_recs, lambda x: wiki_data.get(x[0], {}).get('wam_score', 0), reverse=True)
         for this_wiki, recommendations in tr_sorted:
             try:
-                line = [this_wiki[0]] + [r['id'] for r in recommendations]
+                line = [this_wiki[0]] + [r['id'] for r in recommendations if r['id'] != this_wiki[0]]
             except TypeError:
                 continue
             if len(line) < 2:
