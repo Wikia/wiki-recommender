@@ -22,7 +22,7 @@ def main():
         wiki_data = {}
         r = p.map_async(wiki_data_for_ids, [ids[i:i+20] for i in range(0, len(ids), 20)])
         map(wiki_data.update, r.get())
-        map(wiki_data.update, [recs for terms, recs in terms_and_recs])
+        map(wiki_data.update, [r for terms, recs in terms_and_recs for r in recs])
 
         my_workbook = xlwt.Workbook()
         ids_worksheet = my_workbook.add_sheet("Wiki IDs")
