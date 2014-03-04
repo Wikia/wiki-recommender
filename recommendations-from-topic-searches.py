@@ -48,7 +48,7 @@ def main():
                            reverse=True)
         for this_wiki, recommendations in tr_sorted:
             try:
-                line = [this_wiki[0]] + [r['id'] for r in recommendations if r['id'] != this_wiki[0]]
+                line = [this_wiki[0]] + [r['id'] for r in recommendations if int(r['id']) != int(this_wiki[0])]
             except TypeError:
                 continue
             if len(line) < 2:
