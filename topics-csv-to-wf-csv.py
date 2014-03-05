@@ -22,6 +22,5 @@ def main():
         newfl.write("\n".join(newlines))
 
 
-
 if __name__ == '__main__':
     main()
