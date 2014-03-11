@@ -51,29 +51,6 @@ def reinitialize_topics():
                          headers={'Content-type': 'application/json'})
 
 
-def csv_to_solr(fl, num_topics=999):
-    update_docs = []
-    for line in fl:
-        ploded = line[:-1].split(',')
-        wid = ploded[0]
-        doc = dict(id=wid, has_topics_b=True)
-        #set as zero first
-        for i in range(0, num_topics):
-            doc['topic_%d_tf' % i] = 0
-        for grouping in ploded[1:]:
-            topic, value = grouping.split('-')
-            doc['topic_%s_tf' % topic] = {'set': value}
-        update_docs += [doc]
-
-    reinitialize = reinitialize_topics()
-
-    update = requests.post('http://dev-search:8983/solr/xwiki/update?commit=true',
-                           data=json.dumps(update_docs),
-                           headers={'Content-type': 'application/json'})
-
-    return {'reinitialize': reinitialize.content, 'update': update.content}
-
-
 def wiki_data_for_ids(ids):
     return requests.get('http://www.wikia.com/api/v1/Wikis/Details',
                         params={'ids': ','.join(ids)}).json().get('items', {})
