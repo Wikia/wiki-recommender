@@ -13,7 +13,7 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
             doc['topic_%d_tf' % i] = {'set': 0}
         doc.update(dict([('topic_%s_tf' % topic, {'set': value})
                          for topic, value in
-                         [grouping.split for grouping in ploded[1:]]]))
+                         [tuple(grouping.split('-')) for grouping in ploded[1:]]]))
         update_docs.append(doc)
 
     if reset_callback:
