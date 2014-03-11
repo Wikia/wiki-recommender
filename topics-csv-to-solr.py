@@ -1,5 +1,4 @@
 import argparse
-import sys
 from lib import wikis, video, csv_to_solr
 
 
