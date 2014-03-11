@@ -8,7 +8,7 @@ def get_args():
     ap.add_argument('--solr-endpoint', dest='solr_endpoint', default='http://search-s10:8983/solr/')
     ap.add_argument('--role', dest='role', default='wiki')
     ap.add_argument('--num-topics', dest='num_topics', default=999)
-    ap.add_argument('--csv', dest='csvfile', type=argparse.Filetype('r'))
+    ap.add_argument('--csv', dest='csvfile', type=argparse.FileType('r'))
     ap.add_argument('--with-reset', dest='with_reset', action='store_true', default=False)
     return ap.parse_args()
 
