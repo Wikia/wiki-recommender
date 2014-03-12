@@ -1,5 +1,13 @@
 import requests
 import json
+from multiprocessing import Pool
+
+
+
+def send_update_docs_to_endpoint(endpoint, update_docs):
+    requests.post('%s/update' % endpoint,
+                  data=json.dumps(update_docs),
+                  headers={'Content-type': 'application/json'})
 
 
 def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999, reset_callback=None):
@@ -9,9 +17,10 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
         reset_callback()
 
     print 'generating update docs'
-    counter = 0
     update_docs = []
-    initialize_doc = dict([('topic_%d_tf' % i, {'set': 0}) for i in range(1, 1000)])
+    counter = 0
+    initialize_doc = dict([('topic_%d_tf' % i, {'set': 0}) for i in range(1, num_topics)])
+    p = Pool(processes=8)
     for line in fl:
         ploded = line[:-1].split(',')
         wid = ploded[0]
@@ -26,9 +35,7 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
         if len(update_docs) >= 10000:
             counter += len(update_docs)
             print counter
-            requests.post('%s/update?commit=true' % endpoint,
-                          data=json.dumps(update_docs),
-                          headers={'Content-type': 'application/json'})
+            p.apply_async(send_update_docs_to_endpoint, update_docs)
             update_docs = []
 
     requests.post('%s/update?commit=true' % endpoint,
