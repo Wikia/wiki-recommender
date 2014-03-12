@@ -19,12 +19,11 @@ def process_linegroup(tup):
                          [tuple(grouping.split('-')) for grouping in ploded[1:]]]))
         update_docs.append(doc)
 
-        if len(update_docs) == 1000:
-            print "Posting to Solr"
+        if len(update_docs) == 500:
+            print "\tPosting 500 docs to Solr"
             response = requests.post('%s/update' % endpoint,
                                      data=json.dumps(update_docs),
                                      headers={'Content-type': 'application/json'})
-            print response.content
             update_docs = []
 
     if update_docs:
@@ -32,7 +31,7 @@ def process_linegroup(tup):
                                  data=json.dumps(update_docs),
                                  headers={'Content-type': 'application/json'})
 
-    return response
+    return True
 
 
 def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999, reset_callback=None):
@@ -43,7 +42,7 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
 
     print 'generating updates'
     initialize_doc = dict([('topic_%d_tf' % i, {'set': 0}) for i in range(1, num_topics)])
-    p = Pool(processes=4)
+    p = Pool(processes=8)
     line_groupings = [[]]
     grouping_counter = 0
     total_lines = 0
