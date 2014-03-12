@@ -6,6 +6,8 @@ from multiprocessing import Pool
 def process_linegroup(tup):
     endpoint, initialize_doc, linegroup = tup
 
+    print endpoint
+
     update_docs = []
     for line in linegroup:
         ploded = line[:-1].split(',')
@@ -19,14 +21,17 @@ def process_linegroup(tup):
                          [tuple(grouping.split('-')) for grouping in ploded[1:]]]))
         update_docs.append(doc)
 
-    return requests.post('%s/update' % endpoint,
-                         data=json.dumps(update_docs),
-                         headers={'Content-type': 'application/json'})
+    response = requests.post('%s/update' % endpoint,
+                             data=json.dumps(update_docs),
+                             headers={'Content-type': 'application/json'})
+    print response.content
+
+    return response
 
 
 def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999, reset_callback=None):
 
-    if reset_callback:
+    if reset_callback is not None:
         print "Resetting (no way back now!)"
         reset_callback()
 

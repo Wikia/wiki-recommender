@@ -14,8 +14,6 @@ def get_args():
 
 
 def reset_callback_from_args(args):
-    print "with reset is", args.with_reset
-    print "role is", args.role
     if not args.with_reset:
         return None
     if args.role is 'wiki':
