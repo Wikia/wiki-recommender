@@ -19,11 +19,18 @@ def process_linegroup(tup):
                          [tuple(grouping.split('-')) for grouping in ploded[1:]]]))
         update_docs.append(doc)
 
-    print "Posting to Solr"
-    response = requests.post('%s/update' % endpoint,
-                             data=json.dumps(update_docs),
-                             headers={'Content-type': 'application/json'})
-    print response.content
+        if len(update_docs == 1000):
+            print "Posting to Solr"
+            response = requests.post('%s/update' % endpoint,
+                                     data=json.dumps(update_docs),
+                                     headers={'Content-type': 'application/json'})
+            print response.content
+            update_docs = []
+
+    if update_docs:
+        response = requests.post('%s/update' % endpoint,
+                                 data=json.dumps(update_docs),
+                                 headers={'Content-type': 'application/json'})
 
     return response
 
