@@ -4,6 +4,9 @@ import json
 
 def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999, reset_callback=None):
     update_docs = []
+
+    print 'generating update docs'
+
     for line in fl:
         ploded = line[:-1].split(',')
         wid = ploded[0]
@@ -15,6 +18,8 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
                          for topic, value in
                          [tuple(grouping.split('-')) for grouping in ploded[1:]]]))
         update_docs.append(doc)
+
+    print 'got update docs'
 
     if reset_callback:
         reset_callback()
