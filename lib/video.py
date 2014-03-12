@@ -16,6 +16,7 @@ def reset_video_results(search_server='http://search-s10:8983', data_server='htt
                                 params=search_query_params).json().get('response')
         print response.get('numFound')
         docs = response.get('docs', [])
+        print len(docs)
         if len(docs) == 0:
             break
         requests.post('%s/solr/main/update' % data_server,
