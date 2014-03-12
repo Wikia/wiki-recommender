@@ -38,11 +38,14 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
     p = Pool(processes=4)
     line_groupings = [[]]
     grouping_counter = 0
+    total_lines = 0
     for line in fl:
         line_groupings[grouping_counter].append(line)
         if len(line_groupings[grouping_counter]) > 10000:
             if grouping_counter == 3:
-                print 'processing line groups for', sum(map(len, line_groupings)), 'lines'
+                curr_lines = sum(map(len, line_groupings))
+                total_lines += curr_lines
+                print 'processing line groups for', curr_lines, 'lines', total_lines, 'total'
                 groupings = [(endpoint, initialize_doc, line_groupings[i]) for i in range(0, len(line_groupings))]
                 print p.map_async(process_linegroup, groupings).get()
                 grouping_counter = 0
