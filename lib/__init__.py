@@ -36,7 +36,7 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
     print 'generating updates'
     initialize_doc = dict([('topic_%d_tf' % i, {'set': 0}) for i in range(1, num_topics)])
     p = Pool(processes=8)
-    counter = Value()
+    counter = Value('i', 0)
     lines = [line for line in fl]
     groupings = [(endpoint, counter, initialize_doc, lines[i:i+10000]) for i in range(0, len(lines), 10000)]
     del lines  # save dat memory my g
