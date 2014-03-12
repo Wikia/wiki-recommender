@@ -5,7 +5,7 @@ VIDEO_WIKI_ID = 298117
 
 
 def reset_video_results(search_server='http://search-s10:8983', data_server='http://dev-search:8983'):
-    delete_params = {'delete': {'query': 'wid:'+VIDEO_WIKI_ID}}
+    delete_params = {'delete': {'query': 'wid:%d'%VIDEO_WIKI_ID}}
     requests.post('%s/solr/main/update?commit=true' % data_server,
                   data=json.dumps(delete_params),
                   headers={'Content-type': 'application/json'})
