@@ -6,8 +6,6 @@ from multiprocessing import Pool
 def process_linegroup(tup):
     endpoint, initialize_doc, linegroup = tup
 
-    print endpoint
-
     update_docs = []
     for line in linegroup:
         ploded = line[:-1].split(',')
@@ -35,18 +33,28 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
         print "Resetting (no way back now!)"
         reset_callback()
 
-    print endpoint
     print 'generating updates'
     initialize_doc = dict([('topic_%d_tf' % i, {'set': 0}) for i in range(1, num_topics)])
     p = Pool(processes=8)
-    lines = [line for line in fl]
-    groupings = [(endpoint, initialize_doc, lines[i:i+10000]) for i in range(0, len(lines), 10000)]
-    del lines  # save dat memory my g
+    line_groupings = [[]]
+    grouping_counter = 0
+    for line in fl:
+        line_groupings[grouping_counter].append(line)
+        if len(line_groupings[grouping_counter] > 10000):
+            if grouping_counter == 7:
+                print 'processing line groups for', sum(map(len, line_groupings)), 'lines'
+                groupings = [(endpoint, initialize_doc, line_groupings[i]) for i in range(0, len(line_groupings))]
+                print p.map_async(process_linegroup, groupings).get()
+                grouping_counter = 0
+                line_groupings = [[]]
+            else:
+                grouping_counter += 1
+                line_groupings[grouping_counter] = []
 
-    print 'processing line groups'
+    groupings = [(endpoint, initialize_doc, line_groupings[i]) for i in range(0, len(line_groupings))]
     print p.map_async(process_linegroup, groupings).get()
 
     print "Committing..."
-    requests.post('%s/update?commit=true' % endpoint)
+    requests.post('%s/update?commit=true' % endpoint, headers={'Content-type': 'application/json'})
 
     return True
