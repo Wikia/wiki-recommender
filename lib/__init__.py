@@ -19,7 +19,7 @@ def process_linegroup(tup):
                          [tuple(grouping.split('-')) for grouping in ploded[1:]]]))
         update_docs.append(doc)
 
-        if len(update_docs == 1000):
+        if len(update_docs) == 1000:
             print "Posting to Solr"
             response = requests.post('%s/update' % endpoint,
                                      data=json.dumps(update_docs),
