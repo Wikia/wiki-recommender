@@ -11,6 +11,7 @@ def reset_video_results(search_server='http://search-s10:8983', data_server='htt
                   headers={'Content-type': 'application/json'})
     search_query_params = {'q': 'wid:%d' % VIDEO_WIKI_ID, 'offset': 0, 'rows': 5000, 'fl': '*', 'wt': 'json'}
     while True:
+        print search_query_params['offset']
         docs = requests.get('%s/solr/main/select' % search_server,
                             params=search_query_params).json().get('response').get('docs')
         if len(docs) == 0:
