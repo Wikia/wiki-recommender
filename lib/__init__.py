@@ -33,6 +33,7 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
         print "Resetting (no way back now!)"
         reset_callback()
 
+    print endpoint
     print 'generating updates'
     initialize_doc = dict([('topic_%d_tf' % i, {'set': 0}) for i in range(1, num_topics)])
     p = Pool(processes=8)
