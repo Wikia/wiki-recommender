@@ -16,9 +16,9 @@ def get_args():
 def reset_callback_from_args(args):
     if not args.with_reset:
         return None
-    if args.role is 'wiki':
+    if args.role == 'wiki':
         return wikis.reinitialize_topics
-    if args.role is 'video':
+    if args.role == 'video':
         return video.reset_video_results
     # obvi pages my g
 
