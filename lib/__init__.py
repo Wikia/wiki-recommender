@@ -42,7 +42,7 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
     del lines  # save dat memory my g
 
     print 'processing line groups'
-    p.map_async(groupings)
+    p.map_async(process_linegroup, groupings)
 
     print "Committing..."
     requests.post('%s/update?commit=true' % endpoint)
