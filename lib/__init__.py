@@ -1,26 +1,10 @@
 import requests
 import json
-from multiprocessing import Pool, Value, Lock
-
-
-class Counter(object):
-    def __init__(self, initval=0):
-        self.val = Value('i', initval)
-        self.lock = Lock()
-
-    def increment(self, value=1, print_output=False):
-        with self.lock:
-            self.val.value += value
-            if print_output:
-                print self.val.value
-
-    def value(self):
-        with self.lock:
-            return self.val.value
+from multiprocessing import Pool
 
 
 def process_linegroup(tup):
-    endpoint, shared_counter, initialize_doc, linegroup = tup
+    endpoint, initialize_doc, linegroup = tup
 
     update_docs = []
     for line in linegroup:
@@ -34,8 +18,6 @@ def process_linegroup(tup):
                          for topic, value in
                          [tuple(grouping.split('-')) for grouping in ploded[1:]]]))
         update_docs.append(doc)
-
-    shared_counter.increment(len(update_docs), print_output=True)
 
     return requests.post('%s/update' % endpoint,
                          data=json.dumps(update_docs),
@@ -52,9 +34,8 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
     print 'generating updates'
     initialize_doc = dict([('topic_%d_tf' % i, {'set': 0}) for i in range(1, num_topics)])
     p = Pool(processes=8)
-    counter = Counter()
     lines = [line for line in fl]
-    groupings = [(endpoint, counter, initialize_doc, lines[i:i+10000]) for i in range(0, len(lines), 10000)]
+    groupings = [(endpoint, initialize_doc, lines[i:i+10000]) for i in range(0, len(lines), 10000)]
     del lines  # save dat memory my g
 
     print 'processing line groups'
