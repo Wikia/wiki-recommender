@@ -49,7 +49,7 @@ def csv_to_solr(fl, endpoint='http://dev-search:8983/solr/main', num_topics=999,
                 line_groupings = [[]]
             else:
                 grouping_counter += 1
-                line_groupings[grouping_counter] = []
+                line_groupings.append([])
 
     groupings = [(endpoint, initialize_doc, line_groupings[i]) for i in range(0, len(line_groupings))]
     print p.map_async(process_linegroup, groupings).get()
