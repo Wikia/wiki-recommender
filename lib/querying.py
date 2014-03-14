@@ -3,8 +3,11 @@ from lib.filters import get_topics_sorted_keys
 
 
 def get_by_id(doc_id, endpoint='http://dev-search:8983/solr/xwiki'):
-    doc_response = requests.get('%s/select/' % endpoint, params=dict(rows=1, q='id:%s' % doc_id, wt='json')).json()
-    return doc_response.get('response', {}).get('docs', [None])[0]
+    doc_response = requests.get('%s/select/' % endpoint, params=dict(rows=1, q='id:%s' % doc_id, wt='json'))
+    docs = doc_response.json().get('response', {}).get('docs', [])
+    if not docs:
+        return None
+    return docs[0]
 
 
 def as_euclidean(doc_id, solr_url='http://dev-search:8983/solr/',
@@ -26,9 +29,10 @@ def as_euclidean(doc_id, solr_url='http://dev-search:8983/solr/',
               'q': '-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in keys])),
               'sort': sort + ' asc',
               'rows': 20,
-              'fl': requested_fields+sort}
+              'fl': requested_fields+','+sort}
 
-    docs = requests.get('%s/select/' % solr_url, params=params).json().get('response', {}).get('docs', [])
+    response = requests.get('%s/select/' % endpoint, params=params)
+    docs = response.json().get('response', {}).get('docs', [])
     map(lambda x: x.__setitem__('score', x[sort]), docs)
 
     return doc, docs
@@ -40,9 +44,7 @@ class QueryIterator(object):
             raise ValueError('core must be "xwiki" or "main"')
 
         self.host = 'http://%s:8983/solr/%s' % (server, core)
-        self.query = 'has_topics_b:true'
-        if query is not None:
-            self.query = '%s AND ' % query + self.query
+        self.query = query
         self.params = params
         if 'start' not in params:
             self.params['start'] = 0
