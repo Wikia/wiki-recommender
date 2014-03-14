@@ -12,7 +12,7 @@ def get_args():
 
 def main():
     args = get_args()
-    qi = QueryIterator(q='is_video:true AND has_topics_b:true', server=args.server, core='main')
+    qi = QueryIterator(query='is_video:true AND has_topics_b:true', server=args.server, core='main')
     p = Pool(processes=args.num_processes)
     with open('video_recommendations.csv', 'w') as fl:
         try:
