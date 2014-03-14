@@ -45,7 +45,6 @@ def get_recommendations(args, docid_to_topics):
     pl = Pool(processes=8)
 
     print "Getting all pairwise relations"
-    pairwise_relations = {}
     ln = len(keys) * len(keys)
     print "Product is", ln, "pairs"
     res = pl.map_async(pairwise, [(k, keys) for k in keys])
@@ -126,8 +125,10 @@ def to_csv(args, recommendations):
 def main():
     global TMP_DIR
     print "Initializing temp directory"
-    map(os.remove, os.listdir(TMP_DIR))
-    os.makedirs(TMP_DIR)
+    if os.path.exists(TMP_DIR):
+        map(os.remove, os.listdir(TMP_DIR))
+    else:
+        os.makedirs(TMP_DIR)
 
     args = get_args()
     print "Scraping CSV"
