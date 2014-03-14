@@ -1,21 +1,29 @@
 import sys
 import itertools
 import xlwt
-import traceback
 from lib.wikis import wiki_data_for_ids
 from collections import defaultdict
-from scipy.spatial.distance import cosine
+from scipy.spatial.distance import cosine, mahalanobis, euclidean
 from multiprocessing import Pool
 from datetime import datetime
+from argparse import ArgumentParser, FileType
 
 
 # man i gotta figure this out
-def tup_cos(tup):
-    a, b = tup
-    return cosine(a, b)
+def tup_dist(tup):
+    func, a, b = tup
+    return func(a, b)
 
 
-def get_recommendations(docid_to_topics):
+def get_args():
+    ap = ArgumentParser()
+    ap.add_argument('--infile', dest="infile", type=FileType)
+    ap.add_argument('--metric', dest="metric", default="cosine")
+    ap.add_argument('--output-format', dest="format", default="csv")
+    return ap.parse_args()
+
+
+def get_recommendations(args, docid_to_topics):
     docid_distances = defaultdict(list)
 
     keys = docid_to_topics.keys()
@@ -25,10 +33,11 @@ def get_recommendations(docid_to_topics):
                           for k in itertools.product(keys, keys) if k[0] != k[1]]))
 
     print "Building param sets from relations"
-    params = [(docid_to_topics[x.split('_')[0]], docid_to_topics[x.split('_')[1]]) for x in relations]
+    func = {'cosine': cosine, 'mahalanobis': mahalanobis, 'euclidean': euclidean}.get(args.metric, cosine)
+    params = [(func, docid_to_topics[x.split('_')[0]], docid_to_topics[x.split('_')[1]]) for x in relations]
 
     print "Computing relations"
-    computed = Pool(processes=8).map(tup_cos, params)
+    computed = Pool(processes=8).map(tup_dist, params)
     distances = zip(relations, computed)
 
     print "Storing distances"
@@ -45,21 +54,8 @@ def get_recommendations(docid_to_topics):
     return docid_distances
 
 
-def main():
-    print "Scraping CSV"
-    docid_to_topics = dict()
-    with open(sys.argv[1]) as fl:
-        for line in fl:
-            cols = line.strip().split(',')
-            docid = cols[0]
-            docid_to_topics[docid] = [0] * 999  # initialize
-            for col in cols[1:]:
-                topic, val = col.split('-')
-                docid_to_topics[docid][int(topic)] = float(val)
-
-    recommendations = get_recommendations(docid_to_topics)
+def to_xls(args, recommendations):
     ids = recommendations.keys()
-
     print "Getting Wiki Data"
     wiki_data = {}
     r = Pool(processes=8).map_async(wiki_data_for_ids, [ids[i:i+20] for i in range(0, len(ids), 20)])
@@ -88,9 +84,40 @@ def main():
             urls_worksheet.write(row, col, wiki_data.get(line[col], {}).get('url', '?'))
             names_worksheet.write(row, col, wiki_data.get(line[col], {}).get('title', '?'))
 
-    fname = 'cosine-recommendations-%s.xls' % (datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
+    fname = '%s-recommendations-%s.xls' % (args.func, datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
     my_workbook.save(fname)
     print fname
+
+
+def to_csv(args, recommendations):
+    fname = '%s-recommendations-%s.csv' % (args.func, datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
+    with open(fname, 'w') as fl:
+        for doc in recommendations:
+            fl.write("%s,%s" % (doc, ",".join(recommendations[doc])))
+    print fname
+
+
+def main():
+    args = get_args()
+    print "Scraping CSV"
+    docid_to_topics = dict()
+
+    for line in args.infile:
+        cols = line.strip().split(',')
+        docid = cols[0]
+        docid_to_topics[docid] = [0] * 999  # initialize
+        for col in cols[1:]:
+            topic, val = col.split('-')
+            docid_to_topics[docid][int(topic)] = float(val)
+
+    recommendations = get_recommendations(args, docid_to_topics)
+
+    if args.format == 'xls':
+        to_xls(args, recommendations)
+    else:
+        to_csv(args, recommendations)
+
+
 
 
 if __name__ == '__main__':
