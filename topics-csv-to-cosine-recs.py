@@ -40,10 +40,10 @@ def get_recommendations(args, docid_to_topics):
                 print counter
             if k != j:
                 pair = sorted([k, j])
-                pairwise["%s_%s" % pair] = 1
+                pairwise["%s_%s" % (pair[0], pair[1])] = 1
 
     relations = pairwise.keys()
-    del pairwise, product
+    del pairwise
     print len(relations), "unique relations"
 
     print "Building param sets from relations"
