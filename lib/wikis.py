@@ -1,6 +1,6 @@
 import requests
 import json
-from .filters import get_topics_sorted_keys
+from .querying import as_euclidean  # backwards compatibility
 
 
 def get_wikis_with_topics(solr_url='http://dev-search:8983/solr/xwiki/select', fields='id'):
@@ -12,31 +12,6 @@ def get_wikis_with_topics(solr_url='http://dev-search:8983/solr/xwiki/select', f
         if params['start'] >= response['numFound']:
             return docs
         params['start'] += params['rows']
-
-
-def as_euclidean(doc_id, solr_url='http://dev-search:8983/solr/xwiki'):
-    doc_response = requests.get('%s/select/' % solr_url, params=dict(rows=1, q='id:%s' % doc_id, wt='json')).json()
-    doc = doc_response.get('response', {}).get('docs', [None])[0]
-    if doc is None:
-        return None, []  # same diff
-
-    keys = get_topics_sorted_keys(doc)
-
-    if not keys:
-        return {}, []
-
-    sort = 'dist(2, vector(%s), vector(%s))' % (", ".join(keys), ", ".join(['%.8f' % doc[key] for key in keys]))
-
-    params = {'wt': 'json',
-              'q': '-id:%s AND (%s)' % (doc['id'], " OR ".join(['(%s:*)' % key for key in keys])),
-              'sort': sort + ' asc',
-              'rows': 20,
-              'fl': 'id,sitename_txt,topic_*,wam_i,url,'+sort}
-
-    docs = requests.get('%s/select/' % solr_url, params=params).json().get('response', {}).get('docs', [])
-    map(lambda x: x.__setitem__('score', x[sort]), docs)
-
-    return doc, docs
 
 
 def reinitialize_topics():
