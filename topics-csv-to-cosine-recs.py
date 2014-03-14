@@ -1,12 +1,17 @@
 import sys
 import itertools
 import xlwt
+import os
+import subprocess
+from time import sleep
 from lib.wikis import wiki_data_for_ids
 from collections import defaultdict
 from scipy.spatial.distance import cosine, mahalanobis, euclidean
 from multiprocessing import Pool
 from datetime import datetime
 from argparse import ArgumentParser, FileType
+
+TMP_DIR = '/tmp/doc_relations/'
 
 
 # man i gotta figure this out
@@ -24,13 +29,15 @@ def get_args():
 
 
 def pairwise(tup):
+    global TMP_DIR
     key, keys = tup
-    dct = dict([("%s_%s" % (pair[0], pair[1]), 1) for pair in [sorted((key, k)) for k in keys] if pair[0] != pair[1]])
-    print key
-    return dct
+    with open(TMP_DIR+key, 'w') as fl:
+        fl.write("\n".join(["%s_%s" % (pair[0], pair[1])
+                            for pair in [sorted((key, k)) for k in keys] if pair[0] != pair[1]]))
 
 
 def get_recommendations(args, docid_to_topics):
+    global TMP_DIR
     docid_distances = defaultdict(list)
 
     keys = docid_to_topics.keys()
@@ -41,11 +48,14 @@ def get_recommendations(args, docid_to_topics):
     pairwise_relations = {}
     ln = len(keys) * len(keys)
     print "Product is", ln, "pairs"
-    for result in pl.map(pairwise, [(k, keys) for k in keys]):
-        pairwise_relations.update(result)
+    res = pl.map_async(pairwise, [(k, keys) for k in keys])
+    while not res.ready():
+        print subprocess.check_output('wc -l %s*' % TMP_DIR, shell=True).split("\n")[-1], "out of", ln
+        sleep(15)
 
-    relations = pairwise_relations.keys()
-    del pairwise_relations
+    print "Aggregating unique results"
+    relations = subprocess.check_output('cat %s/* | sort | uniq', shell=True)
+
     print len(relations), "unique relations"
 
     print "Building param sets from relations"
@@ -114,6 +124,11 @@ def to_csv(args, recommendations):
 
 
 def main():
+    global TMP_DIR
+    print "Initializing temp directory"
+    map(os.remove, os.listdir(TMP_DIR))
+    os.makedirs(TMP_DIR)
+
     args = get_args()
     print "Scraping CSV"
     docid_to_topics = dict()
