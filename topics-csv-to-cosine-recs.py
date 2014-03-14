@@ -29,8 +29,23 @@ def get_recommendations(args, docid_to_topics):
     keys = docid_to_topics.keys()
 
     print "Getting all pairwise relations"
-    relations = list(set(["%s_%s" % (sorted(k)[0], sorted(k)[1])
-                          for k in itertools.product(keys, keys) if k[0] != k[1]]))
+    pairwise = {}
+    counter = 0
+    product = itertools.product(keys, keys)
+    ln = len(product)
+    print "Product is", ln, "pairs"
+    for k in product:
+        counter += 1
+        if counter == ln/10:
+            print counter
+        if k[0] != k[1]:
+            k.sort()
+            pair = "%s_%s" % k[0], k[1]
+            pairwise[pair] = 1
+
+    relations = pairwise.keys()
+    del pairwise
+    print len(relations), "unique relations"
 
     print "Building param sets from relations"
     func = {'cosine': cosine, 'mahalanobis': mahalanobis, 'euclidean': euclidean}.get(args.metric, cosine)
