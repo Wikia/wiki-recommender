@@ -23,27 +23,29 @@ def get_args():
     return ap.parse_args()
 
 
+def pairwise(tup):
+    key, keys = tup
+    dct = dict([("%s_%s" % (pair[0], pair[1]), 1) for pair in [sorted((key, k)) for k in keys] if pair[0] != pair[1]])
+    print key
+    return dct
+
+
 def get_recommendations(args, docid_to_topics):
     docid_distances = defaultdict(list)
 
     keys = docid_to_topics.keys()
 
+    pl = Pool(processes=8)
+
     print "Getting all pairwise relations"
-    pairwise = {}
-    counter = 0
+    pairwise_relations = {}
     ln = len(keys) * len(keys)
     print "Product is", ln, "pairs"
-    for k in keys:
-        for j in keys:
-            counter += 1
-            if counter == ln/100:
-                print counter
-            if k != j:
-                pair = sorted([k, j])
-                pairwise["%s_%s" % (pair[0], pair[1])] = 1
+    for result in pl.map([(k, keys) for k in keys]):
+        pairwise_relations.update(result)
 
-    relations = pairwise.keys()
-    del pairwise
+    relations = pairwise_relations.keys()
+    del pairwise_relations
     print len(relations), "unique relations"
 
     print "Building param sets from relations"
@@ -51,7 +53,7 @@ def get_recommendations(args, docid_to_topics):
     params = [(func, docid_to_topics[x.split('_')[0]], docid_to_topics[x.split('_')[1]]) for x in relations]
 
     print "Computing relations"
-    computed = Pool(processes=8).map(tup_dist, params)
+    computed = pl.map(tup_dist, params)
     distances = zip(relations, computed)
 
     print "Storing distances"
