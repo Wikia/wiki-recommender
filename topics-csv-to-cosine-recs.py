@@ -41,7 +41,7 @@ def get_recommendations(args, docid_to_topics):
     pairwise_relations = {}
     ln = len(keys) * len(keys)
     print "Product is", ln, "pairs"
-    for result in pl.map([(k, keys) for k in keys]):
+    for result in pl.map(pairwise, [(k, keys) for k in keys]):
         pairwise_relations.update(result)
 
     relations = pairwise_relations.keys()
