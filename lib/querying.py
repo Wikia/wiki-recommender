@@ -68,7 +68,7 @@ class QueryIterator(object):
                                 params=self.params).json()
         self.num_found = response['response']['numFound']
         self.docs = response['response']['docs']
-        self.start += self.params['rows']
+        self.params['start'] += self.params['rows']
         return True
 
     def next(self):
