@@ -6,7 +6,7 @@ from multiprocessing import Pool
 def get_args():
     ap = ArgumentParser()
     ap.add_argument('--server', dest='server', default='dev-search')
-    ap.add_argument('--num-processes', dest='num_processes', default='8')
+    ap.add_argument('--num-processes', dest='num_processes', default=8, type=int)
     return ap.parse_args()
 
 
