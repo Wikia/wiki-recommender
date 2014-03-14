@@ -31,7 +31,7 @@ def get_recommendations(args, docid_to_topics):
     print "Getting all pairwise relations"
     pairwise = {}
     counter = 0
-    product = itertools.product(keys, keys)
+    product = [p for p in itertools.product(keys, keys)]
     ln = len(product)
     print "Product is", ln, "pairs"
     for k in product:
