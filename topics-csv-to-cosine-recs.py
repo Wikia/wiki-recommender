@@ -17,7 +17,7 @@ def tup_dist(tup):
 
 def get_args():
     ap = ArgumentParser()
-    ap.add_argument('--infile', dest="infile", type=FileType)
+    ap.add_argument('--infile', dest="infile", type=FileType('r'))
     ap.add_argument('--metric', dest="metric", default="cosine")
     ap.add_argument('--output-format', dest="format", default="csv")
     return ap.parse_args()
