@@ -49,7 +49,7 @@ def get_recommendations(args, docid_to_topics):
     print "Product is", ln, "pairs"
     res = pl.map_async(pairwise, [(k, keys) for k in keys])
     while not res.ready():
-        print subprocess.check_output('cat %s* | wc -l' % TMP_DIR, shell=True), "out of", ln
+        print subprocess.check_output('cat %s* | wc -l' % TMP_DIR, shell=True).strip(), "out of", ln
         sleep(15)
 
     print "Aggregating unique results"
