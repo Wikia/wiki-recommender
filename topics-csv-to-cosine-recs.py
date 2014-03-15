@@ -11,7 +11,7 @@ from multiprocessing import Pool
 from datetime import datetime
 from argparse import ArgumentParser, FileType
 
-TMP_DIR = '/tmp/doc_relations/'
+TMP_DIR = '/mnt/doc_relations/'
 
 
 # man i gotta figure this out
@@ -32,7 +32,7 @@ def pairwise(tup):
     global TMP_DIR
     key, keys = tup
     with open(TMP_DIR+key, 'w') as fl:
-        fl.write("\n".join(["%s_%s" % (pair[0], pair[1])
+        fl.write("\n".join(["%s,%s" % (pair[0], pair[1])
                             for pair in [sorted((key, k)) for k in keys] if pair[0] != pair[1]]))
 
 
@@ -49,17 +49,23 @@ def get_recommendations(args, docid_to_topics):
     print "Product is", ln, "pairs"
     res = pl.map_async(pairwise, [(k, keys) for k in keys])
     while not res.ready():
-        print subprocess.check_output('wc -l %s*' % TMP_DIR, shell=True).split("\n")[-1], "out of", ln
+        print subprocess.check_output('cat %s* | wc -l' % TMP_DIR, shell=True), "out of", ln
         sleep(15)
 
     print "Aggregating unique results"
-    relations = subprocess.check_output('cat %s/* | sort | uniq', shell=True)
+
+    subprocess.call("cat %s/* | sort | uniq > %s/combined" % (TMP_DIR, TMP_DIR))
+
+    relations = subprocess.check_output('wc -l %s/combined' % TMP_DIR, shell=True)
 
     print len(relations), "unique relations"
 
     print "Building param sets from relations"
     func = {'cosine': cosine, 'mahalanobis': mahalanobis, 'euclidean': euclidean}.get(args.metric, cosine)
-    params = [(func, docid_to_topics[x.split('_')[0]], docid_to_topics[x.split('_')[1]]) for x in relations]
+
+    with open('%s/combined' % TMP_DIR, 'r') as fl:
+        params = [(func, docid_to_topics[x.strip().split(',')[0]],
+                   docid_to_topics[x.strip().split(',')[1]]) for x in fl]
 
     print "Computing relations"
     computed = pl.map(tup_dist, params)
