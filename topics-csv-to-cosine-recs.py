@@ -1,18 +1,11 @@
-import sys
-import itertools
 import xlwt
-import os
-import subprocess
-from time import sleep
+import numpy as np
 from lib.wikis import wiki_data_for_ids
 from collections import defaultdict
-from scipy.spatial.distance import cosine, mahalanobis, euclidean
+from scipy.spatial.distance import cdist
 from multiprocessing import Pool
 from datetime import datetime
 from argparse import ArgumentParser, FileType
-
-TMP_DIR = '/mnt/doc_relations/'
-
 
 # man i gotta figure this out
 def tup_dist(tup):
@@ -28,59 +21,15 @@ def get_args():
     return ap.parse_args()
 
 
-def pairwise(tup):
-    global TMP_DIR
-    key, keys = tup
-    with open(TMP_DIR+key, 'w') as fl:
-        fl.write("\n".join(["%s,%s" % (pair[0], pair[1])
-                            for pair in [sorted((key, k)) for k in keys] if pair[0] != pair[1]]))
-
-
 def get_recommendations(args, docid_to_topics):
-    global TMP_DIR
-    docid_distances = defaultdict(list)
+    docid_distances = defaultdict(dict)
 
     keys = docid_to_topics.keys()
+    values = np.array([d.values() for d in docid_to_topics.values()])
 
-    pl = Pool(processes=8)
-
-    print "Getting all pairwise relations"
-    ln = len(keys) * len(keys)
-    print "Product is", ln, "pairs"
-    res = pl.map_async(pairwise, [(k, keys) for k in keys])
-    while not res.ready():
-        print subprocess.check_output('cat %s* | wc -l' % TMP_DIR, shell=True).strip(), "out of", ln
-        sleep(15)
-
-    print "Aggregating unique results"
-
-    subprocess.call("cat %s/* | sort | uniq > %s/combined" % (TMP_DIR, TMP_DIR))
-
-    relations = subprocess.check_output('wc -l %s/combined' % TMP_DIR, shell=True)
-
-    print len(relations), "unique relations"
-
-    print "Building param sets from relations"
     func = {'cosine': cosine, 'mahalanobis': mahalanobis, 'euclidean': euclidean}.get(args.metric, cosine)
 
-    with open('%s/combined' % TMP_DIR, 'r') as fl:
-        params = [(func, docid_to_topics[x.strip().split(',')[0]],
-                   docid_to_topics[x.strip().split(',')[1]]) for x in fl]
-
-    print "Computing relations"
-    computed = pl.map(tup_dist, params)
-    distances = zip(relations, computed)
-
-    print "Storing distances"
-
-    max_distance = max(distance for relation, distance in distances)
-    for relation, distance in filter(lambda y: y[1] != max_distance, distances):
-        a, b = relation.split("_")
-        docid_distances[a].append((b, distance))
-        docid_distances[b].append((a, distance))
-
-    for doc in docid_distances:
-        docid_distances[doc] = sorted(docid_distances[doc], key=lambda x: x[1])
+    print cdist(values)
 
     return docid_distances
 
@@ -129,13 +78,6 @@ def to_csv(args, recommendations):
 
 
 def main():
-    global TMP_DIR
-    print "Initializing temp directory"
-    if os.path.exists(TMP_DIR):
-        map(os.remove, os.listdir(TMP_DIR))
-    else:
-        os.makedirs(TMP_DIR)
-
     args = get_args()
     print "Scraping CSV"
     docid_to_topics = dict()
