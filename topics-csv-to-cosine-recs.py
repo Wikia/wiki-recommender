@@ -1,16 +1,20 @@
 import xlwt
 import numpy as np
+import time
+import sys
 from lib.wikis import wiki_data_for_ids
 from collections import defaultdict
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, pdist
 from multiprocessing import Pool
 from datetime import datetime
 from argparse import ArgumentParser, FileType
 
 # man i gotta figure this out
 def tup_dist(tup):
-    func, a, b = tup
-    return func(a, b)
+    func, docid, a, b = tup
+    result = cdist(a, b, func)
+    print docid, result
+    return docid, result
 
 
 def get_args():
@@ -24,9 +28,31 @@ def get_args():
 def get_recommendations(args, docid_to_topics):
     docid_distances = defaultdict(dict)
 
-    values = np.array([d.values() for d in docid_to_topics.values()])
+    docids, topics = zip(*docid_to_topics.items())
+    values = np.array(topics)
+    nonzeroes = np.nonzero(values)
+    topics_to_ids = defaultdict(dict)
+    ids_to_topics = defaultdict(dict)
+    for i in range(0, len(nonzeroes[0])):
+        topics_to_ids[nonzeroes[1][i]][docids[nonzeroes[0][i]]] = 1
+        ids_to_topics[docids[nonzeroes[0][i]]][nonzeroes[1][i]] = 1
 
-    print cdist(values, args.func)
+    print ids_to_topics, topics_to_ids
+    sys.exit()
+
+    print "Computing distances"
+    p = Pool(processes=8)
+    slice_size = 100
+    docids_enumerated = list(enumerate(docids))    
+
+    for i in range(0, len(docids_enumerated), slice_size):
+        print i
+        start = time.time()
+        results = p.map(tup_dist, [(args.metric, docid, np.array([topics[counter]]), values) for counter, docid in docids_enumerated[i:i+slice_size]])
+        for j, r in enumerate(results):
+            print docids[i+j], r
+        mins = (time.time() - start)/60.0
+        print "took", mins, "mins for", slice_size
 
     return docid_distances
 
