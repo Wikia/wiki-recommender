@@ -24,12 +24,9 @@ def get_args():
 def get_recommendations(args, docid_to_topics):
     docid_distances = defaultdict(dict)
 
-    keys = docid_to_topics.keys()
     values = np.array([d.values() for d in docid_to_topics.values()])
 
-    func = {'cosine': cosine, 'mahalanobis': mahalanobis, 'euclidean': euclidean}.get(args.metric, cosine)
-
-    print cdist(values)
+    print cdist(values, args.func)
 
     return docid_distances
 
