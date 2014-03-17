@@ -85,6 +85,7 @@ def get_recommendations(args, docid_to_topics, callback=None):
 
 def to_csv(args, docid_to_topics):
     fname = '%s-recommendations-%s.csv' % (args.metric, str(datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M')))
+    print fname
     with open(fname, 'w') as fl:
         get_recommendations(args, docid_to_topics,
                             callback=lambda x, y: fl.write("%s,%s" % (x, ",".join(y))))
