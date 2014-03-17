@@ -90,7 +90,7 @@ def to_csv(args, docid_to_topics):
     print fname
     with open(fname, 'w') as fl:
         get_recommendations(args, docid_to_topics,
-                            callback=lambda x, y: fl.write("%s,%s" % (x, ",".join(y))))
+                            callback=lambda x, y: fl.write("%s,%s\n" % (x, ",".join(y))))
     print fname
 
 
