@@ -48,7 +48,7 @@ def get_recommendations(args, docid_to_topics, callback=None):
     docids_enumerated = list(enumerate(docids))
     if args.use_batches:
         start = args.instance_batch_size * args.instance_batch_offset
-        docids_enumerated = docids_enumerated[start:start+args.instance_batch_sizet]
+        docids_enumerated = docids_enumerated[start:start+args.instance_batch_size]
 
     docids_to_recommendations = {}
 
