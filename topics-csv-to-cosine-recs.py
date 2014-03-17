@@ -1,23 +1,24 @@
-import xlwt
 import numpy as np
 import time
-from lib.wikis import wiki_data_for_ids
 from collections import defaultdict
 from scipy.spatial.distance import cdist
 from multiprocessing import Pool
 from datetime import datetime
 from argparse import ArgumentParser, FileType
+from boto import connect_s3
 
 
 def get_args():
     ap = ArgumentParser()
     ap.add_argument('--infile', dest="infile", type=FileType('r'))
+    ap.add_argument('--s3file', dest='s3file')
     ap.add_argument('--metric', dest="metric", default="cosine")
     ap.add_argument('--output-format', dest="format", default="csv")
     ap.add_argument('--slice-size', dest='slice_size', default=500, type=int)
     ap.add_argument('--use-batches', dest='use_batches', action='store_true', default=False)
     ap.add_argument('--instance-batch-size', dest='instance_batch_size', type=int, default=50000)
     ap.add_argument('--instance-batch-offset', dest='instance_batch_offset', type=int, default=0)
+    ap.add_argument('--recommendation-name', dest='recommendation_name', default='video')
     return ap.parse_args()
 
 
@@ -87,11 +88,17 @@ def get_recommendations(args, docid_to_topics, callback=None):
 
 def to_csv(args, docid_to_topics):
     fname = '%s-recommendations-%s.csv' % (args.metric, str(datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M')))
+    if args.use_batches:
+        fname = "%d-%d-%s" % (args.instance_batch_size, args.instance_batch_offset, fname)
     print fname
     with open(fname, 'w') as fl:
         get_recommendations(args, docid_to_topics,
                             callback=lambda x, y: fl.write("%s,%s\n" % (x, ",".join(y))))
-    print fname
+    bucket = connect_s3().get_bucket('nlp-data')
+    keyname = 'recommendations/%s/%s' % (args.recommendation_name, fname)
+    k = bucket.new_key(keyname)
+    k.set_contents_from_filename(fname)
+    print keyname
 
 
 def main():
@@ -99,7 +106,12 @@ def main():
     print "Scraping CSV"
     docid_to_topics = dict()
 
-    for line in args.infile:
+    if args.s3file:
+        fl = connect_s3().get_bucket('nlp-data').get_key(args.s3file).get_file()
+    else:
+        fl = args.infile
+
+    for line in fl:
         cols = line.strip().split(',')
         docid = cols[0]
         docid_to_topics[docid] = [0] * 999  # initialize
