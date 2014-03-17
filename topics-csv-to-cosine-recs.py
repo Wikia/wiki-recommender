@@ -13,7 +13,6 @@ def get_args():
     ap.add_argument('--infile', dest="infile", type=FileType('r'))
     ap.add_argument('--s3file', dest='s3file')
     ap.add_argument('--metric', dest="metric", default="cosine")
-    ap.add_argument('--output-format', dest="format", default="csv")
     ap.add_argument('--slice-size', dest='slice_size', default=500, type=int)
     ap.add_argument('--use-batches', dest='use_batches', action='store_true', default=False)
     ap.add_argument('--instance-batch-size', dest='instance_batch_size', type=int, default=50000)
@@ -107,7 +106,9 @@ def main():
     docid_to_topics = dict()
 
     if args.s3file:
-        fl = connect_s3().get_bucket('nlp-data').get_key(args.s3file).get_file()
+        fname = args.s3file.split('/')[-1]
+        connect_s3().get_bucket('nlp-data').get_key(args.s3file).get_file(open(fname, 'w'))
+        fl = open(fname, 'r')
     else:
         fl = args.infile
 
