@@ -64,8 +64,10 @@ def get_recommendations(args, docid_to_topics, callback=None):
                                                  for row_id in topics_to_positions[topic].keys()])))
 
         print "Computing for", slice_size
-        paramlist = [(args.metric, docid, np.array([topics[cnt]]), map(lambda x: values[x], shared_topic_rowids[cnt-i])) 
-                     for cnt, docid in docids_enumerated[i:i+slice_size] if shared_topic_rowids[cnt-i]]
+        paramlist = [(args.metric, docid, np.array([topics[global_cnt]]),
+                      map(lambda x: values[x], shared_topic_rowids[local_cnt-i]))
+                     for global_cnt, (local_cnt, docid) in enumerate(docids_enumerated[i:i+slice_size])
+                     if shared_topic_rowids[local_cnt-i]]
         results = p.map(tup_dist, paramlist)
         for j, r in enumerate(results):
             docid, result = r
