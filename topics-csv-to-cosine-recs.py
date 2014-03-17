@@ -1,13 +1,13 @@
 import xlwt
 import numpy as np
 import time
-import sys
 from lib.wikis import wiki_data_for_ids
 from collections import defaultdict
-from scipy.spatial.distance import cdist, pdist
+from scipy.spatial.distance import cdist
 from multiprocessing import Pool
 from datetime import datetime
 from argparse import ArgumentParser, FileType
+
 
 def get_args():
     ap = ArgumentParser()
@@ -15,17 +15,19 @@ def get_args():
     ap.add_argument('--metric', dest="metric", default="cosine")
     ap.add_argument('--output-format', dest="format", default="csv")
     ap.add_argument('--slice-size', dest='slice_size', default=500, type=int)
+    ap.add_argument('--use-batches', dest='use_batches', action='store_true', default=False)
+    ap.add_argument('--instance-batch-size', dest='instance_batch_size', type=int, default=50000)
+    ap.add_argument('--instance-batch-offset', dest='instance_batch_offset', type=int, default=0)
     return ap.parse_args()
 
 
-# man i gotta figure this out
 def tup_dist(tup):
     func, docid, a, b = tup
     result = cdist(a, b, func)
     return docid, result
 
 
-def get_recommendations(args, docid_to_topics):
+def get_recommendations(args, docid_to_topics, callback=None):
     docids, topics = zip(*docid_to_topics.items())
     values = np.array(topics)
     nonzeroes = np.nonzero(values)
@@ -44,6 +46,9 @@ def get_recommendations(args, docid_to_topics):
     p = Pool(processes=8)
     slice_size = args.slice_size
     docids_enumerated = list(enumerate(docids))
+    if args.use_batches:
+        start = args.instance_batch_size * args.instance_batch_offset
+        docids_enumerated = docids_enumerated[start:start+args.instance_batch_sizet]
 
     docids_to_recommendations = {}
 
@@ -55,7 +60,8 @@ def get_recommendations(args, docid_to_topics):
         shared_topic_rowids = []
         for counter, did in curr_docids:
             curr_tops = ids_to_topics[did].keys()
-            shared_topic_rowids.append(list(set([row_id for topic in curr_tops for row_id in topics_to_positions[topic].keys()])))
+            shared_topic_rowids.append(list(set([row_id for topic in curr_tops
+                                                 for row_id in topics_to_positions[topic].keys()])))
 
         print "Computing for", slice_size
         paramlist = [(args.metric, docid, np.array([topics[cnt]]), map(lambda x: values[x], shared_topic_rowids[cnt-i])) 
@@ -63,54 +69,25 @@ def get_recommendations(args, docid_to_topics):
         results = p.map(tup_dist, paramlist)
         for j, r in enumerate(results):
             docid, result = r
-            docids_to_recommendations[docid] = [docid for docid, _ in sorted([(docids[rowid], result[0][k]) for k, rowid in enumerate(shared_topic_rowids[j])], key=lambda x: x[1])[:25]]
+            collated = sorted([(docids[rowid], result[0][k])
+                               for k, rowid in enumerate(shared_topic_rowids[j])], key=lambda x: x[1])[:25]
+            recommended_ids = map(lambda x: x[0], collated)
+            if callback:
+                apply(callback, (docid, recommended_ids))
+            else:
+                docids_to_recommendations[docid] = recommended_ids
 
         mins = (time.time() - start)/60.0
         print "took", mins, "mins for", slice_size
 
-    return docids_to_recomendations
+    return docids_to_recommendations
 
 
-def to_xls(args, recommendations):
-    ids = recommendations.keys()
-    print "Getting Wiki Data"
-    wiki_data = {}
-    r = Pool(processes=8).map_async(wiki_data_for_ids, [ids[i:i+20] for i in range(0, len(ids), 20)])
-    map(wiki_data.update, r.get())
-
-    print "Writing Data"
-    my_workbook = xlwt.Workbook()
-    ids_worksheet = my_workbook.add_sheet("Wiki IDs")
-    ids_worksheet.write(0, 0, 'Wiki')
-    ids_worksheet.write(0, 1, 'Recommendations')
-
-    urls_worksheet = my_workbook.add_sheet("Wiki URLs")
-    urls_worksheet.write(0, 0, 'Wiki')
-    urls_worksheet.write(0, 1, 'Recommendations')
-
-    names_worksheet = my_workbook.add_sheet("Wiki Names")
-    names_worksheet.write(0, 0, 'Wiki')
-    names_worksheet.write(0, 1, 'Recommendations')
-
-    docids = sorted(recommendations.keys(), key=lambda y: wiki_data.get(y, {}).get('wam_score', 0), reverse=True)
-    for counter, docid in enumerate(docids):
-        row = counter + 1
-        line = [docid] + [z[0] for z in recommendations[docid][:25]]
-        for col in range(0, len(line)):
-            ids_worksheet.write(row, col, str(line[col]))
-            urls_worksheet.write(row, col, wiki_data.get(line[col], {}).get('url', '?'))
-            names_worksheet.write(row, col, wiki_data.get(line[col], {}).get('title', '?'))
-
-    fname = '%s-recommendations-%s.xls' % (args.func, datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
-    my_workbook.save(fname)
-    print fname
-
-
-def to_csv(args, recommendations):
-    fname = '%s-recommendations-%s.csv' % (args.func, datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
+def to_csv(args, docid_to_topics):
+    fname = '%s-recommendations-%s.csv' % (args.func, str(datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M')))
     with open(fname, 'w') as fl:
-        for doc in recommendations:
-            fl.write("%s,%s" % (doc, ",".join(recommendations[doc])))
+        get_recommendations(args, docid_to_topics,
+                            callback=lambda x, y: fl.write("%s,%s" % (x, ",".join(y))))
     print fname
 
 
@@ -127,12 +104,7 @@ def main():
             topic, val = col.split('-')
             docid_to_topics[docid][int(topic)] = float(val)
 
-    recommendations = get_recommendations(args, docid_to_topics)
-
-    if args.format == 'xls':
-        to_xls(args, recommendations)
-    else:
-        to_csv(args, recommendations)
+    to_csv(args, docid_to_topics)
 
 
 if __name__ == '__main__':
