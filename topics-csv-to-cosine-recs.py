@@ -1,34 +1,74 @@
 import xlwt
 import numpy as np
+import time
+import sys
 from lib.wikis import wiki_data_for_ids
 from collections import defaultdict
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, pdist
 from multiprocessing import Pool
 from datetime import datetime
 from argparse import ArgumentParser, FileType
-
-# man i gotta figure this out
-def tup_dist(tup):
-    func, a, b = tup
-    return func(a, b)
-
 
 def get_args():
     ap = ArgumentParser()
     ap.add_argument('--infile', dest="infile", type=FileType('r'))
     ap.add_argument('--metric', dest="metric", default="cosine")
     ap.add_argument('--output-format', dest="format", default="csv")
+    ap.add_argument('--slice-size', dest='slice_size', default=500, type=int)
     return ap.parse_args()
 
 
+# man i gotta figure this out
+def tup_dist(tup):
+    func, docid, a, b = tup
+    result = cdist(a, b, func)
+    return docid, result
+
+
 def get_recommendations(args, docid_to_topics):
-    docid_distances = defaultdict(dict)
+    docids, topics = zip(*docid_to_topics.items())
+    values = np.array(topics)
+    nonzeroes = np.nonzero(values)
+    topics_to_ids = defaultdict(dict)
+    ids_to_topics = defaultdict(dict)
+    positions_to_topics = defaultdict(dict)
+    topics_to_positions = defaultdict(dict)
 
-    values = np.array([d.values() for d in docid_to_topics.values()])
+    for i in range(0, len(nonzeroes[0])):
+        topics_to_ids[nonzeroes[1][i]][docids[nonzeroes[0][i]]] = 1
+        ids_to_topics[docids[nonzeroes[0][i]]][nonzeroes[1][i]] = 1
+        topics_to_positions[nonzeroes[1][i]][nonzeroes[0][i]] = 1
+        positions_to_topics[nonzeroes[0][i]][nonzeroes[1][i]] = 1
 
-    print cdist(values, args.func)
+    print "Computing distances"
+    p = Pool(processes=8)
+    slice_size = args.slice_size
+    docids_enumerated = list(enumerate(docids))
 
-    return docid_distances
+    docids_to_recommendations = {}
+
+    for i in range(0, len(docids_enumerated), slice_size):
+        print i,
+        start = time.time()
+
+        curr_docids = docids_enumerated[i:i+slice_size]
+        shared_topic_rowids = []
+        for counter, did in curr_docids:
+            curr_tops = ids_to_topics[did].keys()
+            shared_topic_rowids.append(list(set([row_id for topic in curr_tops for row_id in topics_to_positions[topic].keys()])))
+
+        print "Computing for", slice_size
+        paramlist = [(args.metric, docid, np.array([topics[cnt]]), map(lambda x: values[x], shared_topic_rowids[cnt-i])) 
+                     for cnt, docid in docids_enumerated[i:i+slice_size] if shared_topic_rowids[cnt-i]]
+        results = p.map(tup_dist, paramlist)
+        for j, r in enumerate(results):
+            docid, result = r
+            docids_to_recommendations[docid] = [docid for docid, _ in sorted([(docids[rowid], result[0][k]) for k, rowid in enumerate(shared_topic_rowids[j])], key=lambda x: x[1])[:25]]
+
+        mins = (time.time() - start)/60.0
+        print "took", mins, "mins for", slice_size
+
+    return docids_to_recomendations
 
 
 def to_xls(args, recommendations):
