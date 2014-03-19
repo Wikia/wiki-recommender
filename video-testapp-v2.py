@@ -29,13 +29,9 @@ def get_for_ids(docids):
     query = " OR ".join(["id:%s" % docid for docid in docids])
     params = dict(rows=25, q=query, wt='json', fl='id,title_en,url,wid,wikititle_en')
     response = requests.get('%s/select/' % SOLR_URL, params=params)
-    print response.content
     docs = response.json().get('response', {}).get('docs', [])
-    print docs
     hashed = dict([(doc['id'], doc) for doc in docs])
-    print hashed
     docs_sorted = [hashed[docid] for docid in docids if docid in hashed]
-    print docs_sorted
     return docs_sorted
 
 
