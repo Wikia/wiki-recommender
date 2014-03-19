@@ -38,10 +38,11 @@ def get_for_ids(docids):
 
 @app.route('/')
 def index():
+    global SOLR_URL
     query = request.args.get('id')
     queried_doc = None
     if query is not None:
-        docs = get_for_ids(get_by_id(query)['recommendations_ss'])
+        docs = get_for_ids(get_by_id(query, endpoint=SOLR_URL)['recommendations_ss'])
     else:
         docs = get_random_grouping()
 
