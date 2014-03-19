@@ -30,7 +30,7 @@ def get_for_ids(docids):
     params = dict(rows=25, query=query, wt='json', fl='id,title_en,url,wid,wikititle_en')
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
     hashed = dict([(doc['id'], doc) for doc in docs])
-    docs_sorted = [hashed[docid] for docid in docids]
+    docs_sorted = [hashed[docid] for docid in docids if docid in hashed]
     return docs_sorted
 
 
