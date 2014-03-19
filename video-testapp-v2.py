@@ -27,7 +27,8 @@ def get_random_grouping():
 
 
 def get_for_ids(docids):
-    params = " OR ".join(["id:%s" % docid for docid in docids])
+    query = " OR ".join(["id:%s" % docid for docid in docids])
+    params = dict(rows=25, query=query, wt='json', fl='id,title_en,url,wid,wikititle_en')
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
     docs_sorted = [doc for doc in docs for docid in docids if docid == doc['id']]
     print docids
@@ -40,7 +41,7 @@ def index():
     query = request.args.get('id')
     queried_doc = None
     if query is not None:
-        docs = get_by_id(query)
+        docs = get_for_ids(get_by_id(query)['recommendations_ss'])
     else:
         docs = get_random_grouping()
 
