@@ -9,6 +9,7 @@ import json
 import os
 
 
+SOLR_URL = None
 app = Flask(__name__)
 
 
@@ -42,9 +43,9 @@ def index():
     query = request.args.get('id')
     queried_doc = None
     if query is not None:
-        doc = get_by_id(query, endpoint=SOLR_URL)['recommendations_ss']
+        doc = get_by_id(query, endpoint=SOLR_URL)
         print doc
-        docs = get_for_ids()
+        docs = get_for_ids(doc['recommendations_ss'])
     else:
         docs = get_random_grouping()
 
