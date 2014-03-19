@@ -1,12 +1,10 @@
-from flask import Flask, request, render_template, Response
+from flask import Flask, request, render_template
 from lib.filters import get_topics_sorted_keys, intersection_count, get_topics_sorted, strip_file, append
 from lib.querying import get_by_id
 from argparse import ArgumentParser
 import requests
 import re
 import random
-import json
-import os
 
 
 SOLR_URL = None
@@ -31,9 +29,8 @@ def get_for_ids(docids):
     query = " OR ".join(["id:%s" % docid for docid in docids])
     params = dict(rows=25, query=query, wt='json', fl='id,title_en,url,wid,wikititle_en')
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
-    docs_sorted = [doc for doc in docs for docid in docids if docid == doc['id']]
-    print docids
-    print [d['id'] for d in docs_sorted]
+    hashed = dict([(doc['id'], doc) for doc in docs])
+    docs_sorted = [hashed[docid] for docid in docids]
     return docs_sorted
 
 
