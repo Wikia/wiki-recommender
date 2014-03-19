@@ -42,7 +42,9 @@ def index():
     query = request.args.get('id')
     queried_doc = None
     if query is not None:
-        docs = get_for_ids(get_by_id(query, endpoint=SOLR_URL)['recommendations_ss'])
+        doc = get_by_id(query, endpoint=SOLR_URL)['recommendations_ss']
+        print doc
+        docs = get_for_ids()
     else:
         docs = get_random_grouping()
 
