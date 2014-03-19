@@ -19,8 +19,8 @@ def get_args():
 
 
 def get_random_grouping():
-    params = dict(rows=25, q='is_video:true', sort='views desc',
-                  wt='json', fl='id,title_en,topic_*,url,wid,wikititle_en')
+    params = dict(rows=25, q='is_video:true AND recommendations_ss:*', sort='views desc',
+                  wt='json', fl='id,title_en,topic_*,url,wid,wikititle_en,recommendations_ss')
     params['start'] = request.args.get('start', int(random.randint(0, 50000)))
     docs = requests.get('%s/select/' % SOLR_URL, params=params).json().get('response', {}).get('docs', [])
     return docs
